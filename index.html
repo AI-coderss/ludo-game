@@ -101,7 +101,6 @@
         .btn-sage.active { display: flex; animation: popIn 0.3s ease-out; }
 
         .status-display {
-    
             font-size: 1.2rem;
             font-weight: bold;
             min-width: 250px;
@@ -540,6 +539,7 @@
 </head>
 <body>
 
+    <!-- Sage Panel for Gemini Output -->
    
     <div class="top-bar">
         <div class="controls">
@@ -655,6 +655,9 @@
         </div>
     </div>
 
+    <!-- Dice roll sound (inside audios folder) -->
+    <audio id="diceSound" src="audios/dice.mp3" preload="auto"></audio>
+
     <script>
         /* --- API KEY --- */
         const apiKey = ""; // API Key injected by environment
@@ -662,24 +665,30 @@
             console.warn("API key is missing. Sage advice and commentary features will be disabled.");
         }
 
-        /* --- Audio Context --- */
+        /* --- Audio Context + Dice MP3 --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const diceAudio = document.getElementById('diceSound');
+
         function playSound(type) {
+            // 🎲 Use dice.mp3 for roll
+            if (type === 'roll' && diceAudio) {
+                try {
+                    diceAudio.currentTime = 0;
+                } catch (e) {}
+                diceAudio.play().catch(() => {
+                    console.warn("Dice sound play was blocked by the browser.");
+                });
+                return; // Skip oscillator for roll
+            }
+
+            // Keep WebAudio synth for move / capture
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
 
-            if (type === 'roll') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.25);
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.25);
-            } else if (type === 'move') {
+            if (type === 'move') {
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(400, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
@@ -753,6 +762,7 @@
         /* --- GEMINI API INTEGRATION --- */
 
         function toggleSage() {
+            if (!sagePanel) return;
             sagePanel.classList.toggle('visible');
         }
 
@@ -778,7 +788,7 @@
         function getBoardSummary() {
             let summary = `Current Player: ${gameState.activeColors[gameState.currentTurnIndex]}. Dice Roll: ${gameState.diceValue}.\n`;
             gameState.activeColors.forEach(color => {
-                const tokens = gameState.players[color];
+                const tokens = gameState.players[color] || [];
                 const positions = tokens.map(t => {
                     if (t.state === 'YARD') return 'In Base';
                     if (t.state === 'HOME') return 'Finished';
@@ -790,6 +800,8 @@
         }
 
         async function askSageAdvice() {
+            if (!sagePanel || !sageText || !sageLoading) return;
+
             sagePanel.classList.add('visible');
             sageText.style.display = 'none';
             sageLoading.style.display = 'block';
@@ -814,6 +826,8 @@
         }
 
         async function triggerCommentary(eventType, details) {
+            if (!sagePanel || !sageText || !sageLoading) return;
+
             // Don't interrupt often, just occasionally
             if (Math.random() > 0.7 || eventType === 'win') {
                 sagePanel.classList.add('visible');
@@ -830,10 +844,10 @@
                 sageText.style.display = 'block';
                 sageText.innerText = `"${comment.trim()}"`;
                 
-                // Hide after a few seconds if it's just commentary
                 if (eventType !== 'win') {
                     setTimeout(() => {
-                       // sagePanel.classList.remove('visible'); // Optional: auto-hide
+                        // Optionally auto-hide
+                        // sagePanel.classList.remove('visible');
                     }, 5000);
                 }
             }
@@ -864,7 +878,6 @@
                     }
                 } else {
                     selectedColors.push(color);
-                    // Sort colors based on ALL_COLORS order to maintain turn sequence
                     selectedColors.sort((a,b) => ALL_COLORS.indexOf(a) - ALL_COLORS.indexOf(b));
                     toggle.classList.add('selected');
                     document.getElementById('playerError').style.display = 'none';
@@ -891,7 +904,8 @@
 
             ALL_COLORS.forEach(c => {
                 const isActive = gameState.activeColors.includes(c);
-                document.getElementById(`win-${c}`).classList.toggle('active', isActive);
+                const elem = document.getElementById(`win-${c}`);
+                if (elem) elem.classList.toggle('active', isActive);
             });
 
             const bases = Array.from(document.querySelectorAll('.base'));
@@ -918,13 +932,11 @@
                     cell.dataset.r = r;
                     cell.dataset.c = c;
                     
-                    // Home Runs
                     if (r === 7 && c > 0 && c < 6) cell.classList.add('path-red');
                     if (c === 7 && r > 0 && r < 6) cell.classList.add('path-green');
                     if (r === 7 && c > 8 && c < 14) cell.classList.add('path-blue');
                     if (c === 7 && r > 8 && r < 14) cell.classList.add('path-yellow');
                     
-                    // Start Squares
                     if (r === 6 && c === 1) cell.classList.add('path-red');
                     if (r === 1 && c === 8) cell.classList.add('path-green');
                     if (r === 8 && c === 13) cell.classList.add('path-blue');
@@ -1089,18 +1101,12 @@
             if (!diceCubeEl) return;
             let rx = 0, ry = 0;
             switch(num) {
-                case 1: // front
-                    rx = 0; ry = 0; break;
-                case 2: // back
-                    rx = 0; ry = 180; break;
-                case 3: // right
-                    rx = 0; ry = -90; break;
-                case 4: // left
-                    rx = 0; ry = 90; break;
-                case 5: // top
-                    rx = -90; ry = 0; break;
-                case 6: // bottom
-                    rx = 90; ry = 0; break;
+                case 1: rx = 0;   ry =   0;  break;  // front
+                case 2: rx = 0;   ry = 180; break;  // back
+                case 3: rx = 0;   ry = -90; break;  // right
+                case 4: rx = 0;   ry =  90; break;  // left
+                case 5: rx = -90; ry =   0; break;  // top
+                case 6: rx =  90; ry =   0; break;  // bottom
             }
             diceCubeEl.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
         }
@@ -1137,7 +1143,6 @@
 
             const isHuman = !gameState.isAI || color === gameState.humanColor;
 
-            // Enable Sage Button if it's human turn and they have moves
             if (isHuman && movable.length > 0) {
                 askSageBtn.classList.add('active');
             } else {
@@ -1185,7 +1190,7 @@
             gameState.waitingForMove = false;
             gameState.animating = true;
             document.querySelectorAll('.token').forEach(t => t.classList.remove('active-turn'));
-            askSageBtn.classList.remove('active'); // Hide sage button during move
+            askSageBtn.classList.remove('active');
 
             const roll = gameState.diceValue;
 
@@ -1208,8 +1213,8 @@
                 token.state = 'HOME';
                 playSound('capture'); 
                 gameState.scores[token.color]++;
-                document.getElementById(`score-${token.color}`).innerText = gameState.scores[token.color];
-                // Trigger Win Commentary
+                const scoreEl = document.getElementById(`score-${token.color}`);
+                if (scoreEl) scoreEl.innerText = gameState.scores[token.color];
                 triggerCommentary('win', `${token.color} scored a point!`);
             }
 
@@ -1262,7 +1267,6 @@
                             oppToken.state = 'YARD';
                             oppToken.stepsTaken = 0;
                             statusText.innerText = `${activeToken.color} captured ${oppColor}!`;
-                            // Trigger Capture Commentary
                             triggerCommentary('capture', `${activeToken.color} captured ${oppColor} and sent them home.`);
                         }
                     }
@@ -1291,7 +1295,7 @@
                 diceLabel.innerText = "Thinking...";
             }
 
-            askSageBtn.classList.remove('active'); // Reset button visibility
+            askSageBtn.classList.remove('active');
             startTimer();
 
             if (!isHuman) {
@@ -1354,7 +1358,6 @@
         }
 
         function onDiceDragStart(e) {
-            // Allow dragging from the dice area (but not if game modal is over it)
             const pos = getClientPos(e);
             const rect = diceAreaEl.getBoundingClientRect();
             isDraggingDice = true;
@@ -1402,8 +1405,9 @@
         window.addEventListener('mouseup', onDiceDragEnd);
         window.addEventListener('touchend', onDiceDragEnd);
 
-        // start game with modal open; user hits Start Game
+        // Game starts with settings modal; player presses "Start Game"
     </script>
 </body>
 </html>
+
 
