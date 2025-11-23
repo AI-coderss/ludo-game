@@ -17,7 +17,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #2c3e50;
+            background-color: #ebeef1;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -290,7 +290,7 @@
         .dice {
             width: 60px;
             height: 60px;
-            background: white;
+            background: linear-gradient(145deg, #ffffff, #d9d9d9);
             border: 2px solid #333;
             border-radius: 10px;
             display: grid;
@@ -298,17 +298,29 @@
             grid-template-rows: repeat(3, 1fr);
             padding: 4px;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            box-sizing: border-box;
+        }
+
+        .dice:hover {
+            transform: rotateX(10deg) rotateY(10deg) translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .dot {
-            background: #333;
+            background: radial-gradient(circle, #333 60%, #000);
             border-radius: 50%;
             margin: 2px;
             visibility: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
         
-        .dice.rolling { animation: shake 0.5s infinite; }
+        .dice.rolling {
+            animation: shake 0.5s infinite;
+        }
         
         .turn-badge {
             width: 20px;
@@ -512,6 +524,9 @@
     <script>
         /* --- API KEY --- */
         const apiKey = ""; // API Key injected by environment
+        if (!apiKey) {
+            console.warn("API key is missing. Sage advice and commentary features will be disabled.");
+        }
 
         /* --- Audio Context --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
