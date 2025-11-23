@@ -538,9 +538,6 @@
     </style>
 </head>
 <body>
-
-    <!-- Sage Panel for Gemini Output -->
-   
     <div class="top-bar">
         <div class="controls">
             <button class="btn-settings" id="openSettings">⚙ Settings</button>
@@ -657,6 +654,11 @@
 
     <!-- Dice roll sound (inside audios folder) -->
     <audio id="diceSound" src="audios/dice.mp3" preload="auto"></audio>
+    <!-- Confetti celebration sound (inside audios folder) -->
+    <audio id="confettiSound" src="audios/confetti.mp3" preload="auto"></audio>
+
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
     <script>
         /* --- API KEY --- */
@@ -665,9 +667,10 @@
             console.warn("API key is missing. Sage advice and commentary features will be disabled.");
         }
 
-        /* --- Audio Context + Dice MP3 --- */
+        /* --- Audio Context + Dice / Confetti MP3 --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const diceAudio = document.getElementById('diceSound');
+        const confettiAudio = document.getElementById('confettiSound');
 
         function playSound(type) {
             // 🎲 Use dice.mp3 for roll
@@ -707,8 +710,53 @@
             }
         }
 
+        function playConfettiSound() {
+            if (!confettiAudio) return;
+            try {
+                confettiAudio.currentTime = 0;
+            } catch (e) {}
+            confettiAudio.play().catch(() => {
+                console.warn("Confetti sound play was blocked by the browser.");
+            });
+        }
+
+        function launchConfettiShow(winnerColor) {
+            // colors based on player colors
+            const colors = ['#ff4757', '#2ecc71', '#f1c40f', '#3498db'];
+
+            if (typeof confetti !== 'function') return;
+
+            const duration = 3000;
+            const animationEnd = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 9,
+                    angle: 60,
+                    spread: 65,
+                    origin: { x: 0, y: 0.7 },
+                    colors
+                });
+                confetti({
+                    particleCount: 9,
+                    angle: 120,
+                    spread: 65,
+                    origin: { x: 1, y: 0.7 },
+                    colors
+                });
+
+                if (Date.now() < animationEnd) {
+                    requestAnimationFrame(frame);
+                }
+            })();
+        }
+
+        function startCelebration(winnerColor) {
+            playConfettiSound();
+            launchConfettiShow(winnerColor);
+        }
+
         /* --- Constants --- */
-        // Reordered to match clockwise: Red (TL), Green (TR), Blue (BR), Yellow (BL)
         const ALL_COLORS = ['red', 'green', 'blue', 'yellow'];
         const TURN_DURATION = 30; 
         
@@ -828,7 +876,6 @@
         async function triggerCommentary(eventType, details) {
             if (!sagePanel || !sageText || !sageLoading) return;
 
-            // Don't interrupt often, just occasionally
             if (Math.random() > 0.7 || eventType === 'win') {
                 sagePanel.classList.add('visible');
                 sageText.style.display = 'none';
@@ -1226,6 +1273,8 @@
                 document.getElementById('winnerText').innerText = `${token.color.toUpperCase()} WINS!`;
                 document.getElementById('winnerModal').classList.add('active');
                 triggerCommentary('win', `${token.color} won the whole game!`);
+                // 🎉 Start celebration: sound + confetti
+                startCelebration(token.color);
                 gameState.animating = false;
                 return;
             }
@@ -1274,7 +1323,6 @@
             });
         }
 
-        // Update dice border + glow to match active player
         function updateDiceActiveBorder(color) {
             if (!diceAreaEl) return;
             diceAreaEl.style.setProperty('--active-color', `var(--${color})`);
@@ -1409,5 +1457,6 @@
     </script>
 </body>
 </html>
+
 
 
