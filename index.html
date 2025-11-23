@@ -171,7 +171,6 @@
         .base-green { background: var(--green); grid-area: 1 / 10 / 7 / 16; } 
         .base-blue { background: var(--blue); grid-area: 10 / 10 / 16 / 16; } 
         .base-yellow { background: var(--yellow); grid-area: 10 / 1 / 16 / 7; } 
-        
         .base-circle-container {
             background: white;
             border-radius: 50%;
@@ -272,54 +271,111 @@
             100% { opacity: 1; }
         }
 
-        /* --- Dice Area --- */
+        /* --- Dice Area (3D GLASS CUBE + ACTIVE BORDER) --- */
         .dice-area {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: white;
+            background: rgba(255,255,255,0.9);
             padding: 15px;
-            border-radius: 15px;
+            border-radius: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+            backdrop-filter: blur(16px);
             z-index: 100;
+            border: 3px solid rgba(255,255,255,0.7);
+            --active-color: var(--red);
+            touch-action: none; /* needed for smooth touch-drag on mobile */
+        }
+
+        .dice-area.active-border {
+            border-color: var(--active-color);
+            box-shadow:
+                0 15px 30px rgba(0,0,0,0.25),
+                0 0 12px rgba(255,255,255,0.8),
+                0 0 18px var(--active-color);
+            animation: pulse-border 1.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+            0% {
+                box-shadow:
+                    0 15px 30px rgba(0,0,0,0.25),
+                    0 0 8px rgba(255,255,255,0.7),
+                    0 0 12px rgba(0,0,0,0.25);
+            }
+            50% {
+                box-shadow:
+                    0 18px 36px rgba(0,0,0,0.35),
+                    0 0 14px rgba(255,255,255,0.95),
+                    0 0 24px rgba(0,0,0,0.35);
+            }
+            100% {
+                box-shadow:
+                    0 15px 30px rgba(0,0,0,0.25),
+                    0 0 8px rgba(255,255,255,0.7),
+                    0 0 12px rgba(0,0,0,0.25);
+            }
         }
 
         .dice {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(145deg, #ffffff, #d9d9d9);
-            border: 2px solid #333;
-            border-radius: 10px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            padding: 4px;
+            width: 70px;
+            height: 70px;
+            position: relative;
             cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            perspective: 600px;
+        }
+
+        .dice-cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
             transform-style: preserve-3d;
-            perspective: 1000px;
-            box-sizing: border-box;
+            transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        .dice:hover {
-            transform: rotateX(10deg) rotateY(10deg) translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        .dice-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e5ecff);
+            box-shadow:
+                0 8px 20px rgba(0,0,0,0.25),
+                inset 0 0 0 1px rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .dot {
-            background: radial-gradient(circle, #333 60%, #000);
+        .dice-face::before {
+            content: "";
+            position: absolute;
+            inset: 12%;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.1));
+        }
+
+        .dice-pip {
+            position: absolute;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            margin: 2px;
-            visibility: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            background: radial-gradient(circle at 30% 30%, #444, #000);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
         }
-        
-        .dice.rolling {
-            animation: shake 0.5s infinite;
+
+        .dice-face.front  { transform: rotateY(  0deg) translateZ(35px); }
+        .dice-face.back   { transform: rotateY(180deg) translateZ(35px); }
+        .dice-face.right  { transform: rotateY( 90deg) translateZ(35px); }
+        .dice-face.left   { transform: rotateY(-90deg) translateZ(35px); }
+        .dice-face.top    { transform: rotateX( 90deg) translateZ(35px); }
+        .dice-face.bottom { transform: rotateX(-90deg) translateZ(35px); }
+
+        .dice.rolling .dice-cube {
+            animation: roll-spin 0.5s linear infinite;
         }
         
         .turn-badge {
@@ -427,12 +483,56 @@
             100% { transform: rotate(0deg); }
         }
 
+        /* 3D cube spin keyframes */
+        @keyframes roll-spin {
+            0%   { transform: rotateX(0deg) rotateY(0deg); }
+            50%  { transform: rotateX(180deg) rotateY(180deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
         /* Mobile tweaks */
         @media (max-width: 600px) {
-            .controls { flex-wrap: wrap; justify-content: center; width: 90%; padding: 10px; }
-            .dice-area { bottom: 10px; right: 10px; padding: 10px; transform: scale(0.8); transform-origin: bottom right; }
-            .wins-tracker { font-size: 0.75rem; width: 95%; justify-content: space-around; }
-            .sage-panel { top: auto; bottom: 100px; left: 10px; width: calc(100% - 40px); transform: translateY(200px); }
+            .controls {
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 95%;
+                padding: 6px 10px;
+                gap: 6px;
+            }
+
+            .status-display {
+                font-size: 0.9rem;
+                min-width: auto;
+            }
+
+            .timer-display {
+                font-size: 0.9rem;
+                padding: 3px 8px;
+            }
+
+            .wins-tracker {
+                font-size: 0.7rem;
+                width: 95%;
+                justify-content: space-around;
+                padding: 3px 8px;
+                gap: 8px;
+            }
+
+            .dice-area {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px;
+                transform: scale(0.9);
+                transform-origin: bottom right;
+            }
+
+            .sage-panel {
+                top: auto;
+                bottom: 100px;
+                left: 10px;
+                width: calc(100% - 40px);
+                transform: translateY(200px);
+            }
             .sage-panel.visible { transform: translateY(0); }
         }
     </style>
@@ -473,11 +573,50 @@
         <div class="center"></div>
     </div>
 
+    <!-- UPDATED DICE AREA: 3D CUBE + DRAGGABLE + ACTIVE BORDER -->
     <div class="dice-area" id="diceControl">
         <div class="dice" id="dice">
-            <div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div>
-            <div class="dot" id="d4"></div><div class="dot" id="d5"></div><div class="dot" id="d6"></div>
-            <div class="dot" id="d7"></div><div class="dot" id="d8"></div><div class="dot" id="d9"></div>
+            <div class="dice-cube" id="diceCube">
+                <!-- 1 -->
+                <div class="dice-face front">
+                    <span class="dice-pip" style="top:50%;left:50%;transform:translate(-50%,-50%);"></span>
+                </div>
+                <!-- 2 -->
+                <div class="dice-face back">
+                    <span class="dice-pip" style="top:30%;left:30%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:70%;left:70%;transform:translate(-50%,-50%);"></span>
+                </div>
+                <!-- 3 -->
+                <div class="dice-face right">
+                    <span class="dice-pip" style="top:25%;left:25%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:50%;left:50%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:75%;left:75%;transform:translate(-50%,-50%);"></span>
+                </div>
+                <!-- 4 -->
+                <div class="dice-face left">
+                    <span class="dice-pip" style="top:25%;left:25%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:25%;left:75%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:75%;left:25%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:75%;left:75%;transform:translate(-50%,-50%);"></span>
+                </div>
+                <!-- 5 -->
+                <div class="dice-face top">
+                    <span class="dice-pip" style="top:25%;left:25%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:25%;left:75%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:50%;left:50%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:75%;left:25%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:75%;left:75%;transform:translate(-50%,-50%);"></span>
+                </div>
+                <!-- 6 -->
+                <div class="dice-face bottom">
+                    <span class="dice-pip" style="top:25%;left:25%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:50%;left:25%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:75%;left:25%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:25%;left:75%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:50%;left:75%;transform:translate(-50%,-50%);"></span>
+                    <span class="dice-pip" style="top:75%;left:75%;transform:translate(-50%,-50%);"></span>
+                </div>
+            </div>
         </div>
         <div style="margin-top:5px; color:#333; font-weight:bold" id="diceLabel">Roll</div>
     </div>
@@ -537,7 +676,15 @@
             osc.connect(gain);
             gain.connect(audioCtx.destination);
 
-            if (type === 'move') {
+            if (type === 'roll') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            } else if (type === 'move') {
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(400, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
@@ -597,11 +744,12 @@
         /* --- DOM Elements --- */
         const boardEl = document.getElementById('board');
         const diceEl = document.getElementById('dice');
+        const diceCubeEl = document.getElementById('diceCube');
+        const diceAreaEl = document.getElementById('diceControl');
         const diceLabel = document.getElementById('diceLabel');
         const statusText = document.getElementById('statusText');
         const timeValueEl = document.getElementById('timeValue');
         const timerDisplayEl = document.getElementById('timerDisplay');
-        const dots = Array.from(document.querySelectorAll('.dot'));
         const askSageBtn = document.getElementById('askSageBtn');
         const sagePanel = document.getElementById('sagePanel');
         const sageText = document.getElementById('sageText');
@@ -941,15 +1089,25 @@
             });
         }
 
+        // Rotate 3D cube instead of 2D dots
         function drawDice(num) {
-            dots.forEach(d => d.style.visibility = 'hidden');
-            const show = (ids) => ids.forEach(id => document.getElementById(id).style.visibility = 'visible');
-            if(num === 1) show(['d5']);
-            if(num === 2) show(['d3', 'd7']);
-            if(num === 3) show(['d3', 'd5', 'd7']);
-            if(num === 4) show(['d1', 'd3', 'd7', 'd9']);
-            if(num === 5) show(['d1', 'd3', 'd5', 'd7', 'd9']);
-            if(num === 6) show(['d1', 'd3', 'd4', 'd6', 'd7', 'd9']);
+            if (!diceCubeEl) return;
+            let rx = 0, ry = 0;
+            switch(num) {
+                case 1: // front
+                    rx = 0; ry = 0; break;
+                case 2: // back
+                    rx = 0; ry = 180; break;
+                case 3: // right
+                    rx = 0; ry = -90; break;
+                case 4: // left
+                    rx = 0; ry = 90; break;
+                case 5: // top
+                    rx = -90; ry = 0; break;
+                case 6: // bottom
+                    rx = 90; ry = 0; break;
+            }
+            diceCubeEl.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
         }
 
         diceEl.onclick = () => {
@@ -965,6 +1123,7 @@
             gameState.waitingForRoll = false;
             diceEl.classList.add('rolling');
             diceLabel.innerText = "Rolling...";
+            playSound('roll');
 
             setTimeout(() => {
                 diceEl.classList.remove('rolling');
@@ -1116,10 +1275,18 @@
             });
         }
 
+        // Update dice border + glow to match active player
+        function updateDiceActiveBorder(color) {
+            if (!diceAreaEl) return;
+            diceAreaEl.style.setProperty('--active-color', `var(--${color})`);
+            diceAreaEl.classList.add('active-border');
+        }
+
         function startTurn() {
             const color = gameState.activeColors[gameState.currentTurnIndex];
             statusText.innerHTML = `<span class="turn-badge" style="background:var(--${color})"></span>${color.toUpperCase()}'s Turn`;
             diceEl.style.borderColor = `var(--${color})`;
+            updateDiceActiveBorder(color);
             
             const isHuman = !gameState.isAI || color === gameState.humanColor;
 
@@ -1176,5 +1343,72 @@
 
             startMoveSequence(bestToken);
         }
+
+        /* --- DRAGGABLE DICE AREA (Desktop + Mobile) --- */
+        let isDraggingDice = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let diceStartLeft = 0;
+        let diceStartTop = 0;
+
+        function getClientPos(e) {
+            if (e.touches && e.touches.length) {
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        function onDiceDragStart(e) {
+            // Allow dragging from the dice area (but not if game modal is over it)
+            const pos = getClientPos(e);
+            const rect = diceAreaEl.getBoundingClientRect();
+            isDraggingDice = true;
+            dragStartX = pos.x;
+            dragStartY = pos.y;
+            diceStartLeft = rect.left;
+            diceStartTop = rect.top;
+            diceAreaEl.style.transition = 'none';
+        }
+
+        function onDiceDragMove(e) {
+            if (!isDraggingDice) return;
+            e.preventDefault();
+            const pos = getClientPos(e);
+            const dx = pos.x - dragStartX;
+            const dy = pos.y - dragStartY;
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const rect = diceAreaEl.getBoundingClientRect();
+            const margin = 5;
+
+            let newLeft = diceStartLeft + dx;
+            let newTop = diceStartTop + dy;
+
+            newLeft = Math.max(margin, Math.min(newLeft, vw - rect.width - margin));
+            newTop = Math.max(margin, Math.min(newTop, vh - rect.height - margin));
+
+            diceAreaEl.style.left = newLeft + 'px';
+            diceAreaEl.style.top = newTop + 'px';
+            diceAreaEl.style.right = 'auto';
+            diceAreaEl.style.bottom = 'auto';
+        }
+
+        function onDiceDragEnd() {
+            if (!isDraggingDice) return;
+            isDraggingDice = false;
+            diceAreaEl.style.transition = '';
+        }
+
+        diceAreaEl.addEventListener('mousedown', onDiceDragStart);
+        diceAreaEl.addEventListener('touchstart', onDiceDragStart, { passive: false });
+        window.addEventListener('mousemove', onDiceDragMove);
+        window.addEventListener('touchmove', onDiceDragMove, { passive: false });
+        window.addEventListener('mouseup', onDiceDragEnd);
+        window.addEventListener('touchend', onDiceDragEnd);
+
+        // start game with modal open; user hits Start Game
     </script>
 </body>
+</html>
+
