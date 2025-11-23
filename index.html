@@ -538,14 +538,6 @@
     </style>
 </head>
 <body>
-
-    <!-- Sage Panel for Gemini Output -->
-    <div class="sage-panel" id="sagePanel">
-        <div class="sage-header">✨ Ludo Sage <span style="font-size:0.8em; margin-left:auto; cursor:pointer" onclick="toggleSage()">✕</span></div>
-        <div class="sage-text" id="sageText">"Welcome! I am the spirit of the board. Play well!"</div>
-        <div class="sage-loading" id="sageLoading">Consulting the stars...</div>
-    </div>
-
     <div class="top-bar">
         <div class="controls">
             <button class="btn-settings" id="openSettings">⚙ Settings</button>
@@ -555,7 +547,6 @@
             <div class="timer-display" id="timerDisplay">
                 ⏱ <span id="timeValue">30</span>
             </div>
-            <button class="btn-sage" id="askSageBtn" onclick="askSageAdvice()">✨ Ask Sage</button>
         </div>
         <div class="wins-tracker">
             <div class="win-count" id="win-red"><span style="color:var(--red)">Red:</span> <span class="trophy-icon">🏆</span> <span id="score-red">0</span></div>
