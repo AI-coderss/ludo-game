@@ -2,9 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ludo + Snakes & Ladders</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Ludo + Snakes & Ladders with CSS 3D Plastic Dice</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&display=swap");
+
       :root {
         --red: #ff4757;
         --green: #2ecc71;
@@ -26,7 +31,6 @@
         min-height: 100vh;
         color: white;
         user-select: none;
-        /* allow scroll if something overflows, but board itself is centered */
         overflow-y: auto;
       }
 
@@ -152,7 +156,6 @@
         transform: rotateY(180deg);
       }
 
-      /* BOTH boards occupy EXACTLY the same area, front/back */
       .ludo-board,
       .snake-board {
         position: absolute;
@@ -343,7 +346,7 @@
         }
       }
 
-      /* --- Snakes & Ladders Board — same position, back face --- */
+      /* --- Snakes & Ladders Board --- */
       .snake-board {
         transform: rotateY(180deg);
         background: radial-gradient(circle at 30% 30%, #fdfaf3, #f8c471);
@@ -364,7 +367,6 @@
         gap: 10px;
       }
 
-      /* Your Snakes & Ladders grid exactly as given */
       .board {
         display: grid;
         grid-template-areas:
@@ -421,13 +423,13 @@
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
       }
 
-      /* --- Dice Area --- */
+      /* --- Dice Area with CSS 3D Plastic Dice --- */
       .dice-area {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 15px;
+        background: rgba(255, 255, 255, 0.92);
+        padding: 15px 15px 10px;
         border-radius: 20px;
         display: flex;
         flex-direction: column;
@@ -438,6 +440,7 @@
         border: 3px solid rgba(255, 255, 255, 0.7);
         --active-color: var(--red);
         touch-action: none;
+        position: fixed;
       }
 
       .dice-area.active-border {
@@ -462,91 +465,140 @@
         }
       }
 
-      .dice {
-        width: 70px;
-        height: 70px;
-        position: relative;
-        cursor: pointer;
+      /* 3D Scene Container (from your design) */
+      .scene {
+        width: 80px;
+        height: 80px;
         perspective: 600px;
+        cursor: pointer;
+        position: relative;
       }
 
-      .dice-cube {
+      /* The Dice Object */
+      .scene .dice {
         width: 100%;
         height: 100%;
         position: relative;
         transform-style: preserve-3d;
-        transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+        transform: rotateX(-30deg) rotateY(-45deg);
       }
 
-      .dice-face {
+      /* Individual Faces */
+      .face {
         position: absolute;
-        width: 100%;
-        height: 100%;
+        width: 80px;
+        height: 80px;
         border-radius: 16px;
-        background: radial-gradient(circle at 30% 30%, #ffffff, #e5ecff);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25),
-          inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+
+        /* REALISTIC WHITE PLASTIC STYLE */
+        background: #f7f7f7;
+        border: 1px solid #e0e0e0;
+
+        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05),
+          inset 2px 2px 5px rgba(255, 255, 255, 1),
+          inset -2px -2px 8px rgba(0, 0, 0, 0.1);
+
+        backface-visibility: hidden;
+
         display: flex;
         justify-content: center;
         align-items: center;
       }
 
-      .dice-face::before {
-        content: "";
-        position: absolute;
-        inset: 12%;
-        border-radius: 12px;
-        background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.7),
-          rgba(255, 255, 255, 0.1)
-        );
-      }
-
-      .dice-pip {
-        position: absolute;
-        width: 10px;
-        height: 10px;
+      /* Engraved Pips (Dots) */
+      .pip {
+        display: block;
+        width: 15px;
+        height: 15px;
         border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%, #444, #000);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        background: #1a1a1a;
+        position: absolute;
+
+        box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.8),
+          inset -1px -1px 2px rgba(255, 255, 255, 0.2),
+          0 1px 1px rgba(255, 255, 255, 0.5);
       }
 
-      .dice-face.front {
-        transform: rotateY(0deg) translateZ(35px);
+      /* Face Positioning */
+      .front {
+        transform: rotateY(0deg) translateZ(40px);
       }
-      .dice-face.back {
-        transform: rotateY(180deg) translateZ(35px);
+      .back {
+        transform: rotateY(180deg) translateZ(40px);
       }
-      .dice-face.right {
-        transform: rotateY(90deg) translateZ(35px);
+      .right {
+        transform: rotateY(90deg) translateZ(40px);
       }
-      .dice-face.left {
-        transform: rotateY(-90deg) translateZ(35px);
+      .left {
+        transform: rotateY(-90deg) translateZ(40px);
       }
-      .dice-face.top {
-        transform: rotateX(90deg) translateZ(35px);
+      .top {
+        transform: rotateX(90deg) translateZ(40px);
       }
-      .dice-face.bottom {
-        transform: rotateX(-90deg) translateZ(35px);
-      }
-
-      .dice.rolling .dice-cube {
-        animation: roll-spin 0.5s linear infinite;
+      .bottom {
+        transform: rotateX(-90deg) translateZ(40px);
       }
 
-      @keyframes roll-spin {
-        0% {
-          transform: rotateX(0deg) rotateY(0deg);
-        }
-        50% {
-          transform: rotateX(180deg) rotateY(180deg);
-        }
-        100% {
-          transform: rotateX(360deg) rotateY(360deg);
-        }
+      /* Pip Layouts */
+      .face[data-val="1"] .pip:nth-child(1),
+      .face[data-val="3"] .pip:nth-child(2),
+      .face[data-val="5"] .pip:nth-child(5) {
+        top: 32.5px;
+        left: 32.5px;
       }
 
+      .pip.tl {
+        top: 12px;
+        left: 12px;
+      }
+      .pip.br {
+        bottom: 12px;
+        right: 12px;
+      }
+
+      .pip.tr {
+        top: 12px;
+        right: 12px;
+      }
+      .pip.bl {
+        bottom: 12px;
+        left: 12px;
+      }
+
+      .pip.ml {
+        top: 32.5px;
+        left: 12px;
+      }
+      .pip.mr {
+        top: 32.5px;
+        right: 12px;
+      }
+
+      /* Result Text (anchored to dice-area) */
+      #result-display {
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translate(-50%, -100%);
+        font-size: 0.9rem;
+        color: #333;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-weight: 700;
+        font-family: "Outfit", sans-serif;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 4px 10px;
+        border-radius: 20px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+
+      #result-display.show {
+        opacity: 1;
+      }
+
+      /* Modal etc */
       .modal {
         display: none;
         position: fixed;
@@ -736,8 +788,8 @@
       <div class="controls">
         <button class="btn-settings" id="openSettings">⚙ Settings</button>
         <div class="status-display" id="statusText">
-          <span class="turn-badge" style="background: var(--red)"></span> Red's
-          Turn
+          <span class="turn-badge" style="background: var(--red)"></span>
+          Red's Turn
         </div>
         <div class="timer-display" id="timerDisplay">
           ⏱ <span id="timeValue">30</span>
@@ -767,9 +819,13 @@
     </div>
 
     <audio id="diceSound" src="audios/dice.mp3" preload="auto"></audio>
-    <audio id="confettiSound" src="audios/confetti.mp3" preload="auto"></audio>
+    <audio
+      id="confettiSound"
+      src="audios/confetti.mp3"
+      preload="auto"
+    ></audio>
 
-    <!-- BOTH boards share this wrapper and flip in place -->
+    <!-- BOARD WRAPPER (Ludo + Snake & Ladder share same space) -->
     <div class="board-wrapper">
       <div class="board-inner" id="boardInner">
         <!-- LUDO FRONT -->
@@ -794,111 +850,46 @@
       </div>
     </div>
 
-    <!-- DICE AREA -->
+    <!-- DICE AREA WITH CSS 3D PLASTIC DICE (draggable) -->
     <div class="dice-area" id="diceControl">
-      <div class="dice" id="dice">
-        <div class="dice-cube" id="diceCube">
+      <div id="result-display">Click to Roll</div>
+      <div class="scene" id="diceScene">
+        <div class="dice" id="dice">
           <!-- 1 -->
-          <div class="dice-face front">
-            <span
-              class="dice-pip"
-              style="top: 50%; left: 50%; transform: translate(-50%, -50%)"
-            ></span>
+          <div class="face front" data-val="1">
+            <span class="pip"></span>
           </div>
-          <!-- 2 -->
-          <div class="dice-face back">
-            <span
-              class="dice-pip"
-              style="top: 30%; left: 30%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 70%; left: 70%; transform: translate(-50%, -50%)"
-            ></span>
-          </div>
-          <!-- 3 -->
-          <div class="dice-face right">
-            <span
-              class="dice-pip"
-              style="top: 25%; left: 25%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 50%; left: 50%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 75%; left: 75%; transform: translate(-50%, -50%)"
-            ></span>
-          </div>
-          <!-- 4 -->
-          <div class="dice-face left">
-            <span
-              class="dice-pip"
-              style="top: 25%; left: 25%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 25%; left: 75%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 75%; left: 25%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 75%; left: 75%; transform: translate(-50%, -50%)"
-            ></span>
-          </div>
-          <!-- 5 -->
-          <div class="dice-face top">
-            <span
-              class="dice-pip"
-              style="top: 25%; left: 25%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 25%; left: 75%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 50%; left: 50%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 75%; left: 25%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 75%; left: 75%; transform: translate(-50%, -50%)"
-            ></span>
-          </div>
+
           <!-- 6 -->
-          <div class="dice-face bottom">
-            <span
-              class="dice-pip"
-              style="top: 25%; left: 25%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 50%; left: 25%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 75%; left: 25%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 25%; left: 75%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 50%; left: 75%; transform: translate(-50%, -50%)"
-            ></span>
-            <span
-              class="dice-pip"
-              style="top: 75%; left: 75%; transform: translate(-50%, -50%)"
-            ></span>
+          <div class="face back" data-val="6">
+            <span class="pip tl"></span><span class="pip tr"></span>
+            <span class="pip ml"></span><span class="pip mr"></span>
+            <span class="pip bl"></span><span class="pip br"></span>
+          </div>
+
+          <!-- 5 -->
+          <div class="face right" data-val="5">
+            <span class="pip tl"></span><span class="pip tr"></span>
+            <span class="pip bl"></span><span class="pip br"></span>
+            <span class="pip"></span>
+          </div>
+
+          <!-- 2 -->
+          <div class="face left" data-val="2">
+            <span class="pip tl"></span><span class="pip br"></span>
+          </div>
+
+          <!-- 3 -->
+          <div class="face top" data-val="3">
+            <span class="pip tl"></span>
+            <span class="pip"></span>
+            <span class="pip br"></span>
+          </div>
+
+          <!-- 4 -->
+          <div class="face bottom" data-val="4">
+            <span class="pip tl"></span><span class="pip tr"></span>
+            <span class="pip bl"></span><span class="pip br"></span>
           </div>
         </div>
       </div>
@@ -964,7 +955,9 @@
         <button
           class="btn-settings"
           style="margin-top: 10px"
-          onclick="document.getElementById('winnerModal').classList.remove('active')"
+          onclick="document
+            .getElementById('winnerModal')
+            .classList.remove('active')"
         >
           View Board
         </button>
@@ -972,7 +965,7 @@
     </div>
 
     <script>
-      /* ===== SIMPLE SOUND HELPERS ===== */
+      /* ===== BASIC AUDIO HELPERS ===== */
       const audioCtx = new (window.AudioContext ||
         window.webkitAudioContext)();
       const diceAudio = document.getElementById("diceSound");
@@ -1015,7 +1008,10 @@
             audioCtx.currentTime + 0.2
           );
           gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+          gain.gain.linearRampToValueAtTime(
+            0.01,
+            audioCtx.currentTime + 0.2
+          );
           osc.start();
           osc.stop(audioCtx.currentTime + 0.2);
         } else if (type === "ladder") {
@@ -1088,7 +1084,78 @@
         }, 250);
       }
 
-      /* ===== LUDO CONSTANTS ===== */
+      /* ===== DOM REFERENCES ===== */
+      const boardEl = document.getElementById("board");
+      const boardInnerEl = document.getElementById("boardInner");
+
+      const statusText = document.getElementById("statusText");
+      const timeValueEl = document.getElementById("timeValue");
+      const timerDisplayEl = document.getElementById("timerDisplay");
+      const toggleBoardBtn = document.getElementById("toggleBoardBtn");
+
+      const diceAreaEl = document.getElementById("diceControl");
+      const diceSceneEl = document.getElementById("diceScene");
+      const diceCube = document.getElementById("dice");
+      const resultDisplay = document.getElementById("result-display");
+      const diceLabel = document.getElementById("diceLabel");
+
+      /* ===== CSS 3D DICE LOGIC (your design, adapted) ===== */
+      const faceRotations = {
+        1: [0, 0], // front
+        6: [0, 180], // back
+        5: [0, -90], // right
+        2: [0, 90], // left
+        3: [-90, 0], // top
+        4: [90, 0], // bottom
+      };
+
+      let currentRotation = { x: -30, y: -45 };
+      const diceSpinDuration = 1500;
+      let isDiceAnimating = false;
+
+      function normalize360(angle) {
+        let a = angle % 360;
+        if (a < 0) a += 360;
+        return a;
+      }
+
+      function drawDice(num) {
+        if (!diceCube || !faceRotations[num]) return;
+
+        isDiceAnimating = true;
+        if (resultDisplay) resultDisplay.classList.remove("show");
+
+        const target = faceRotations[num];
+
+        const spinCountX = 2 + Math.floor(Math.random() * 3);
+        const spinCountY = 2 + Math.floor(Math.random() * 3);
+
+        let nextX = currentRotation.x + 360 * spinCountX;
+        let nextY = currentRotation.y + 360 * spinCountY;
+
+        const remainderX = normalize360(nextX);
+        const remainderY = normalize360(nextY);
+
+        const diffX = target[0] - remainderX;
+        const diffY = target[1] - remainderY;
+
+        nextX += diffX;
+        nextY += diffY;
+
+        diceCube.style.transform = `rotateX(${nextX}deg) rotateY(${nextY}deg)`;
+
+        setTimeout(() => {
+          currentRotation.x = nextX;
+          currentRotation.y = nextY;
+          isDiceAnimating = false;
+          if (resultDisplay) {
+            resultDisplay.innerText = num;
+            resultDisplay.classList.add("show");
+          }
+        }, diceSpinDuration);
+      }
+
+      /* ===== LUDO CONSTANTS & STATE ===== */
       const ALL_COLORS = ["red", "green", "blue", "yellow"];
       const TURN_DURATION = 30;
 
@@ -1202,67 +1269,318 @@
 
       let currentBoardMode = "ludo";
 
-      const boardEl = document.getElementById("board");
-      const boardInnerEl = document.getElementById("boardInner");
+      function getCellCoordinates(color, stepsTaken) {
+        if (stepsTaken < 0) return null;
+        if (stepsTaken >= 51) {
+          const homeIndex = stepsTaken - 51;
+          if (homeIndex > 5) return [7, 7];
+          return HOME_PATHS[color][homeIndex];
+        }
+        const startIdx = START_INDICES[color];
+        let actualIdx = (startIdx + stepsTaken) % 52;
+        return MAIN_PATH_COORDS[actualIdx];
+      }
 
-      const diceEl = document.getElementById("dice");
-      const diceCubeEl = document.getElementById("diceCube");
-      const diceAreaEl = document.getElementById("diceControl");
-      const diceLabel = document.getElementById("diceLabel");
+      function restartTimerIfLudo() {
+        if (currentBoardMode !== "ludo") return;
+        startTimer();
+      }
 
-      const statusText = document.getElementById("statusText");
-      const timeValueEl = document.getElementById("timeValue");
-      const timerDisplayEl = document.getElementById("timerDisplay");
-      const toggleBoardBtn = document.getElementById("toggleBoardBtn");
-
-      /* ===== SETTINGS ===== */
-      let settingMode = "ai";
-      let selectedColors = ["red", "green", "blue", "yellow"];
-
-      document.querySelectorAll("#modeSelect .btn-option").forEach((btn) => {
-        btn.onclick = () => {
-          document
-            .querySelectorAll("#modeSelect .btn-option")
-            .forEach((b) => b.classList.remove("selected"));
-          btn.classList.add("selected");
-          settingMode = btn.dataset.val;
-        };
-      });
-
-      document.querySelectorAll(".color-toggle").forEach((toggle) => {
-        toggle.onclick = () => {
-          const color = toggle.dataset.color;
-          if (toggle.classList.contains("selected")) {
-            if (selectedColors.length > 2) {
-              selectedColors = selectedColors.filter((c) => c !== color);
-              toggle.classList.remove("selected");
-              document.getElementById("playerError").style.display = "none";
-            } else {
-              document.getElementById("playerError").style.display = "block";
-            }
-          } else {
-            selectedColors.push(color);
-            selectedColors.sort(
-              (a, b) => ALL_COLORS.indexOf(a) - ALL_COLORS.indexOf(b)
-            );
-            toggle.classList.add("selected");
-            document.getElementById("playerError").style.display = "none";
-          }
-          document.getElementById("startGameBtn").disabled =
-            selectedColors.length < 2;
-        };
-      });
-
-      document.getElementById("startGameBtn").onclick = () => {
-        if (selectedColors.length < 2) return;
-        document.getElementById("settingsModal").classList.remove("active");
-        initGame(selectedColors, settingMode === "ai");
-      };
-
-      document.getElementById("openSettings").onclick = () => {
-        document.getElementById("settingsModal").classList.add("active");
+      function startTimer() {
         clearInterval(gameState.timer);
-      };
+        gameState.timeLeft = TURN_DURATION;
+        updateTimerDisplay();
+
+        gameState.timer = setInterval(() => {
+          gameState.timeLeft--;
+          updateTimerDisplay();
+
+          if (gameState.timeLeft <= 0) {
+            clearInterval(gameState.timer);
+            handleTimeout();
+          }
+        }, 1000);
+      }
+
+      function updateTimerDisplay() {
+        timeValueEl.innerText = gameState.timeLeft;
+        if (gameState.timeLeft <= 10) {
+          timerDisplayEl.classList.add("warning");
+        } else {
+          timerDisplayEl.classList.remove("warning");
+        }
+      }
+
+      function handleTimeout() {
+        if (currentBoardMode !== "ludo") return;
+        if (gameState.waitingForRoll) {
+          statusText.innerText = "Time's up! Turn Skipped.";
+          setTimeout(nextTurn, 1500);
+        } else if (gameState.waitingForMove) {
+          statusText.innerText = "Time's up! Auto-move.";
+          const color = gameState.activeColors[gameState.currentTurnIndex];
+          const tokens = gameState.players[color];
+          const movable = tokens.filter((t) => canMove(t));
+          if (movable.length > 0) {
+            startMoveSequence(movable[0]);
+          } else {
+            nextTurn();
+          }
+        }
+      }
+
+      function createTokens(color) {
+        const tokens = [];
+        for (let i = 0; i < 4; i++) {
+          tokens.push({
+            id: `${color}-${i}`,
+            color: color,
+            state: "YARD",
+            stepsTaken: 0,
+          });
+        }
+        return tokens;
+      }
+
+      function renderTokens() {
+        document.querySelectorAll(".token").forEach((el) => el.remove());
+
+        gameState.activeColors.forEach((color) => {
+          const playersTokens = gameState.players[color];
+          const cellMap = {};
+
+          playersTokens.forEach((t) => {
+            let container = null;
+            if (t.state === "YARD") {
+              const base = document.querySelector(`.base-${color}`);
+              const index = parseInt(t.id.split("-")[1]);
+              if (base && base.children[index]) {
+                container = base.children[index];
+              }
+            } else if (t.state === "HOME") {
+              container = document.querySelector(".center");
+            } else {
+              const coords = getCellCoordinates(color, t.stepsTaken);
+              if (coords) {
+                container = document.querySelector(
+                  `.cell[data-r="${coords[0]}"][data-c="${coords[1]}"]`
+                );
+              }
+            }
+
+            if (container) {
+              const tokenEl = document.createElement("div");
+              tokenEl.className = `token ${color}`;
+              tokenEl.id = t.id;
+              tokenEl.onclick = (e) => {
+                e.stopPropagation();
+                handleTokenClick(t.id);
+              };
+
+              if (
+                gameState.waitingForMove &&
+                gameState.activeColors[gameState.currentTurnIndex] ===
+                  color &&
+                canMove(t)
+              ) {
+                tokenEl.classList.add("active-turn");
+              }
+
+              if (t.state === "BOARD") {
+                const key = container.dataset.r + "-" + container.dataset.c;
+                if (!cellMap[key]) cellMap[key] = [];
+                cellMap[key].push(tokenEl);
+              } else if (t.state === "YARD") {
+                tokenEl.classList.add("in-base");
+                container.appendChild(tokenEl);
+              } else {
+                container.appendChild(tokenEl);
+              }
+            }
+          });
+
+          for (const key in cellMap) {
+            const group = cellMap[key];
+            const parts = key.split("-");
+            const cell = document.querySelector(
+              `.cell[data-r="${parts[0]}"][data-c="${parts[1]}"]`
+            );
+            if (group.length > 1) {
+              group.forEach((el, index) => {
+                el.classList.add("stacked");
+                el.style.transform = `translate(${index * 4}px, ${
+                  index * 4
+                }px)`;
+                cell.appendChild(el);
+              });
+            } else {
+              cell.appendChild(group[0]);
+            }
+          }
+        });
+      }
+
+      function canMove(token) {
+        const roll = gameState.diceValue;
+        if (token.state === "HOME") return false;
+        if (token.state === "YARD") return roll === 6;
+        if (token.state === "BOARD") return token.stepsTaken + roll <= 57;
+        return false;
+      }
+
+      function handleTokenClick(id) {
+        if (!gameState.waitingForMove || gameState.animating) return;
+        const color = gameState.activeColors[gameState.currentTurnIndex];
+
+        if (!id.startsWith(color)) return;
+        if (gameState.isAI && color !== gameState.humanColor) return;
+
+        const token = gameState.players[color].find((t) => t.id === id);
+        if (canMove(token)) startMoveSequence(token);
+      }
+
+      function wait(ms) {
+        return new Promise((r) => setTimeout(r, ms));
+      }
+
+      async function startMoveSequence(token) {
+        clearInterval(gameState.timer);
+        gameState.waitingForMove = false;
+        gameState.animating = true;
+        document
+          .querySelectorAll(".token")
+          .forEach((t) => t.classList.remove("active-turn"));
+
+        const roll = gameState.diceValue;
+        let gotCapture = false;
+
+        if (token.state === "YARD") {
+          token.state = "BOARD";
+          token.stepsTaken = 0;
+          playSound("move");
+          renderTokens();
+          await wait(300);
+        } else {
+          for (let i = 0; i < roll; i++) {
+            token.stepsTaken++;
+            playSound("move");
+            renderTokens();
+            await wait(250);
+          }
+        }
+
+        if (token.stepsTaken === 57) {
+          token.state = "HOME";
+          playSound("capture");
+          gameState.scores[token.color]++;
+          document.getElementById(`score-${token.color}`).innerText =
+            gameState.scores[token.color];
+        }
+
+        if (token.state === "BOARD") {
+          gotCapture = checkCollision(token);
+        }
+
+        renderTokens();
+
+        if (checkWin(token.color)) {
+          document.getElementById(
+            "winnerText"
+          ).innerText = `${token.color.toUpperCase()} WINS!`;
+          document.getElementById("winnerModal").classList.add("active");
+          launchConfetti();
+          gameState.animating = false;
+          return;
+        }
+
+        const extraTurn = roll === 6 || gotCapture;
+
+        if (extraTurn) {
+          statusText.innerText = `${token.color.toUpperCase()} rolls again!`;
+          gameState.waitingForRoll = true;
+          gameState.animating = false;
+          restartTimerIfLudo();
+
+          const isHuman =
+            !gameState.isAI || token.color === gameState.humanColor;
+          if (!isHuman && currentBoardMode === "ludo") {
+            setTimeout(rollDice, 1000);
+          }
+        } else {
+          gameState.animating = false;
+          nextTurn();
+        }
+      }
+
+      function checkCollision(activeToken) {
+        const activeCoords = getCellCoordinates(
+          activeToken.color,
+          activeToken.stepsTaken
+        );
+        if (!activeCoords) return false;
+        const activeCoordStr = activeCoords.toString();
+
+        const startIdx = START_INDICES[activeToken.color];
+        const actualIdx = (startIdx + activeToken.stepsTaken) % 52;
+
+        if (activeToken.stepsTaken > 50) return false;
+        if (SAFE_INDICES.includes(actualIdx)) return false;
+
+        let captured = false;
+
+        gameState.activeColors.forEach((oppColor) => {
+          if (oppColor === activeToken.color) return;
+          gameState.players[oppColor].forEach((oppToken) => {
+            if (oppToken.state === "BOARD" && oppToken.stepsTaken <= 50) {
+              const oppCoords = getCellCoordinates(
+                oppColor,
+                oppToken.stepsTaken
+              );
+              if (oppCoords && oppCoords.toString() === activeCoordStr) {
+                playSound("capture");
+                oppToken.state = "YARD";
+                oppToken.stepsTaken = 0;
+                statusText.innerText = `${
+                  activeToken.color
+                } captured ${oppColor}!`;
+                captured = true;
+              }
+            }
+          });
+        });
+
+        return captured;
+      }
+
+      function checkWin(color) {
+        return gameState.players[color].every((t) => t.state === "HOME");
+      }
+
+      function updateTimerAndStatusForTurn() {
+        const color = gameState.activeColors[gameState.currentTurnIndex];
+        statusText.innerHTML = `<span class="turn-badge" style="background:var(--${color})"></span>${color.toUpperCase()}'s Turn`;
+        updateDiceActiveBorder(color);
+        const isHuman = !gameState.isAI || color === gameState.humanColor;
+        diceLabel.innerText = isHuman ? "Tap Dice" : "Thinking...";
+        restartTimerIfLudo();
+        if (!isHuman && currentBoardMode === "ludo") {
+          setTimeout(rollDice, 1000);
+        }
+      }
+
+      function nextTurn() {
+        gameState.currentTurnIndex =
+          (gameState.currentTurnIndex + 1) %
+          gameState.activeColors.length;
+        gameState.waitingForRoll = true;
+        updateTimerAndStatusForTurn();
+      }
+
+      function updateDiceActiveBorder(color) {
+        if (!diceAreaEl) return;
+        diceAreaEl.style.setProperty("--active-color", `var(--${color})`);
+        diceAreaEl.classList.add("active-border");
+      }
 
       function initGame(colors, aiMode) {
         gameState.isAI = aiMode;
@@ -1330,214 +1648,85 @@
         gameState.animating = false;
 
         renderTokens();
-        startTurn();
+        updateTimerAndStatusForTurn();
       }
 
-      function createTokens(color) {
-        const tokens = [];
-        for (let i = 0; i < 4; i++) {
-          tokens.push({
-            id: `${color}-${i}`,
-            color: color,
-            state: "YARD",
-            stepsTaken: 0,
-          });
-        }
-        return tokens;
-      }
+      /* ===== SETTINGS MODAL ===== */
+      let settingMode = "ai";
+      let selectedColors = ["red", "green", "blue", "yellow"];
 
-      function startTimer() {
-        if (currentBoardMode !== "ludo") return;
-        clearInterval(gameState.timer);
-        gameState.timeLeft = TURN_DURATION;
-        updateTimerDisplay();
+      document.querySelectorAll("#modeSelect .btn-option").forEach((btn) => {
+        btn.onclick = () => {
+          document
+            .querySelectorAll("#modeSelect .btn-option")
+            .forEach((b) => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          settingMode = btn.dataset.val;
+        };
+      });
 
-        gameState.timer = setInterval(() => {
-          gameState.timeLeft--;
-          updateTimerDisplay();
-
-          if (gameState.timeLeft <= 0) {
-            clearInterval(gameState.timer);
-            handleTimeout();
-          }
-        }, 1000);
-      }
-
-      function updateTimerDisplay() {
-        timeValueEl.innerText = gameState.timeLeft;
-        if (gameState.timeLeft <= 10) {
-          timerDisplayEl.classList.add("warning");
-        } else {
-          timerDisplayEl.classList.remove("warning");
-        }
-      }
-
-      function handleTimeout() {
-        if (currentBoardMode !== "ludo") return;
-        if (gameState.waitingForRoll) {
-          statusText.innerText = "Time's up! Turn Skipped.";
-          setTimeout(nextTurn, 1500);
-        } else if (gameState.waitingForMove) {
-          statusText.innerText = "Time's up! Auto-move.";
-          const color = gameState.activeColors[gameState.currentTurnIndex];
-          const tokens = gameState.players[color];
-          const movable = tokens.filter((t) => canMove(t));
-          if (movable.length > 0) {
-            startMoveSequence(movable[0]);
+      document.querySelectorAll(".color-toggle").forEach((toggle) => {
+        toggle.onclick = () => {
+          const color = toggle.dataset.color;
+          if (toggle.classList.contains("selected")) {
+            if (selectedColors.length > 2) {
+              selectedColors = selectedColors.filter((c) => c !== color);
+              toggle.classList.remove("selected");
+              document.getElementById("playerError").style.display = "none";
+            } else {
+              document.getElementById("playerError").style.display = "block";
+            }
           } else {
-            nextTurn();
-          }
-        }
-      }
-
-      function getCellCoordinates(color, stepsTaken) {
-        if (stepsTaken < 0) return null;
-        if (stepsTaken >= 51) {
-          const homeIndex = stepsTaken - 51;
-          if (homeIndex > 5) return [7, 7];
-          return HOME_PATHS[color][homeIndex];
-        }
-        const startIdx = START_INDICES[color];
-        let actualIdx = (startIdx + stepsTaken) % 52;
-        return MAIN_PATH_COORDS[actualIdx];
-      }
-
-      function renderTokens() {
-        document.querySelectorAll(".token").forEach((el) => el.remove());
-
-        gameState.activeColors.forEach((color) => {
-          const playersTokens = gameState.players[color];
-          const cellMap = {};
-
-          playersTokens.forEach((t) => {
-            let container = null;
-            if (t.state === "YARD") {
-              const base = document.querySelector(`.base-${color}`);
-              const index = parseInt(t.id.split("-")[1]);
-              if (base && base.children[index]) {
-                container = base.children[index];
-              }
-            } else if (t.state === "HOME") {
-              container = document.querySelector(".center");
-            } else {
-              const coords = getCellCoordinates(color, t.stepsTaken);
-              if (coords) {
-                container = document.querySelector(
-                  `.cell[data-r="${coords[0]}"][data-c="${coords[1]}"]`
-                );
-              }
-            }
-
-            if (container) {
-              const tokenEl = document.createElement("div");
-              tokenEl.className = `token ${color}`;
-              tokenEl.id = t.id;
-              tokenEl.onclick = (e) => {
-                e.stopPropagation();
-                handleTokenClick(t.id);
-              };
-
-              if (
-                gameState.waitingForMove &&
-                gameState.activeColors[gameState.currentTurnIndex] === color &&
-                canMove(t)
-              ) {
-                tokenEl.classList.add("active-turn");
-              }
-
-              if (t.state === "BOARD") {
-                const key = container.dataset.r + "-" + container.dataset.c;
-                if (!cellMap[key]) cellMap[key] = [];
-                cellMap[key].push(tokenEl);
-              } else if (t.state === "YARD") {
-                tokenEl.classList.add("in-base");
-                container.appendChild(tokenEl);
-              } else {
-                container.appendChild(tokenEl);
-              }
-            }
-          });
-
-          for (const key in cellMap) {
-            const group = cellMap[key];
-            const parts = key.split("-");
-            const cell = document.querySelector(
-              `.cell[data-r="${parts[0]}"][data-c="${parts[1]}"]`
+            selectedColors.push(color);
+            selectedColors.sort(
+              (a, b) => ALL_COLORS.indexOf(a) - ALL_COLORS.indexOf(b)
             );
-            if (group.length > 1) {
-              group.forEach((el, index) => {
-                el.classList.add("stacked");
-                el.style.transform = `translate(${index * 4}px, ${
-                  index * 4
-                }px)`;
-                cell.appendChild(el);
-              });
-            } else {
-              cell.appendChild(group[0]);
-            }
+            toggle.classList.add("selected");
+            document.getElementById("playerError").style.display = "none";
           }
-        });
-      }
+          document.getElementById("startGameBtn").disabled =
+            selectedColors.length < 2;
+        };
+      });
 
-      function drawDice(num) {
-        if (!diceCubeEl) return;
-        let rx = 0,
-          ry = 0;
-        switch (num) {
-          case 1:
-            rx = 0;
-            ry = 0;
-            break;
-          case 2:
-            rx = 0;
-            ry = 180;
-            break;
-          case 3:
-            rx = 0;
-            ry = -90;
-            break;
-          case 4:
-            rx = 0;
-            ry = 90;
-            break;
-          case 5:
-            rx = -90;
-            ry = 0;
-            break;
-          case 6:
-            rx = 90;
-            ry = 0;
-            break;
-        }
-        diceCubeEl.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-      }
+      document.getElementById("startGameBtn").onclick = () => {
+        if (selectedColors.length < 2) return;
+        document.getElementById("settingsModal").classList.remove("active");
+        initGame(selectedColors, settingMode === "ai");
+      };
 
-      diceEl.onclick = () => {
+      document.getElementById("openSettings").onclick = () => {
+        document.getElementById("settingsModal").classList.add("active");
+        clearInterval(gameState.timer);
+      };
+
+      /* ===== LUDO DICE CLICK HANDLER ===== */
+      diceSceneEl.addEventListener("click", () => {
+        if (isDiceAnimating) return;
         if (currentBoardMode === "snake") {
           rollDiceSnake();
           return;
         }
-
         if (gameState.animating) return;
         const color = gameState.activeColors[gameState.currentTurnIndex];
         if (gameState.isAI && color !== gameState.humanColor) return;
         if (gameState.waitingForRoll) rollDice();
-      };
+      });
 
       function rollDice() {
+        if (currentBoardMode !== "ludo") return;
         gameState.waitingForRoll = false;
-        diceEl.classList.add("rolling");
         diceLabel.innerText = "Rolling...";
         playSound("roll");
 
+        const val = Math.floor(Math.random() * 6) + 1;
+        gameState.diceValue = val;
+        drawDice(val);
+
         setTimeout(() => {
-          diceEl.classList.remove("rolling");
-          const val = Math.floor(Math.random() * 6) + 1;
-          gameState.diceValue = val;
-          drawDice(val);
           diceLabel.innerText = val;
           handleRollResult();
-        }, 500);
+        }, diceSpinDuration + 50);
       }
 
       function handleRollResult() {
@@ -1562,172 +1751,6 @@
             setTimeout(aiMakeMove, 1000);
           }
         }
-      }
-
-      function canMove(token) {
-        const roll = gameState.diceValue;
-        if (token.state === "HOME") return false;
-        if (token.state === "YARD") return roll === 6;
-        if (token.state === "BOARD") return token.stepsTaken + roll <= 57;
-        return false;
-      }
-
-      function handleTokenClick(id) {
-        if (!gameState.waitingForMove || gameState.animating) return;
-        const color = gameState.activeColors[gameState.currentTurnIndex];
-
-        if (!id.startsWith(color)) return;
-        if (gameState.isAI && color !== gameState.humanColor) return;
-
-        const token = gameState.players[color].find((t) => t.id === id);
-        if (canMove(token)) startMoveSequence(token);
-      }
-
-      async function startMoveSequence(token) {
-        clearInterval(gameState.timer);
-        gameState.waitingForMove = false;
-        gameState.animating = true;
-        document
-          .querySelectorAll(".token")
-          .forEach((t) => t.classList.remove("active-turn"));
-
-        const roll = gameState.diceValue;
-        let gotCapture = false;
-
-        if (token.state === "YARD") {
-          token.state = "BOARD";
-          token.stepsTaken = 0;
-          playSound("move");
-          renderTokens();
-          await wait(300);
-        } else {
-          for (let i = 0; i < roll; i++) {
-            token.stepsTaken++;
-            playSound("move");
-            renderTokens();
-            await wait(250);
-          }
-        }
-
-        if (token.stepsTaken === 57) {
-          token.state = "HOME";
-          playSound("capture");
-          gameState.scores[token.color]++;
-          document.getElementById(`score-${token.color}`).innerText =
-            gameState.scores[token.color];
-        }
-
-        if (token.state === "BOARD") {
-          gotCapture = checkCollision(token);
-        }
-
-        renderTokens();
-
-        if (checkWin(token.color)) {
-          document.getElementById(
-            "winnerText"
-          ).innerText = `${token.color.toUpperCase()} WINS!`;
-          document.getElementById("winnerModal").classList.add("active");
-          launchConfetti();
-          gameState.animating = false;
-          return;
-        }
-
-        // EXTRA TURN if 6 OR if you KILL someone
-        const extraTurn = roll === 6 || gotCapture;
-
-        if (extraTurn) {
-          statusText.innerText = `${token.color.toUpperCase()} rolls again!`;
-          gameState.waitingForRoll = true;
-          gameState.animating = false;
-          startTimer();
-
-          const isHuman =
-            !gameState.isAI || token.color === gameState.humanColor;
-          if (!isHuman) {
-            setTimeout(rollDice, 1000);
-          }
-        } else {
-          gameState.animating = false;
-          nextTurn();
-        }
-      }
-
-      function checkCollision(activeToken) {
-        const activeCoords = getCellCoordinates(
-          activeToken.color,
-          activeToken.stepsTaken
-        );
-        if (!activeCoords) return false;
-        const activeCoordStr = activeCoords.toString();
-
-        const startIdx = START_INDICES[activeToken.color];
-        const actualIdx = (startIdx + activeToken.stepsTaken) % 52;
-
-        if (activeToken.stepsTaken > 50) return false;
-        if (SAFE_INDICES.includes(actualIdx)) return false;
-
-        let captured = false;
-
-        gameState.activeColors.forEach((oppColor) => {
-          if (oppColor === activeToken.color) return;
-          gameState.players[oppColor].forEach((oppToken) => {
-            if (oppToken.state === "BOARD" && oppToken.stepsTaken <= 50) {
-              const oppCoords = getCellCoordinates(
-                oppColor,
-                oppToken.stepsTaken
-              );
-              if (oppCoords && oppCoords.toString() === activeCoordStr) {
-                playSound("capture");
-                oppToken.state = "YARD";
-                oppToken.stepsTaken = 0;
-                statusText.innerText = `${
-                  activeToken.color
-                } captured ${oppColor}!`;
-                captured = true;
-              }
-            }
-          });
-        });
-
-        return captured;
-      }
-
-      function updateDiceActiveBorder(color) {
-        if (!diceAreaEl) return;
-        diceAreaEl.style.setProperty("--active-color", `var(--${color})`);
-        diceAreaEl.classList.add("active-border");
-      }
-
-      function startTurn() {
-        if (currentBoardMode !== "ludo") return;
-        const color = gameState.activeColors[gameState.currentTurnIndex];
-        statusText.innerHTML = `<span class="turn-badge" style="background:var(--${color})"></span>${color.toUpperCase()}'s Turn`;
-        updateDiceActiveBorder(color);
-
-        const isHuman = !gameState.isAI || color === gameState.humanColor;
-        diceLabel.innerText = isHuman ? "Tap Dice" : "Thinking...";
-
-        startTimer();
-
-        if (!isHuman) {
-          setTimeout(rollDice, 1000);
-        }
-      }
-
-      function nextTurn() {
-        gameState.currentTurnIndex =
-          (gameState.currentTurnIndex + 1) % gameState.activeColors.length;
-        gameState.waitingForRoll = true;
-        startTurn();
-      }
-
-      function checkWin(color) {
-        return gameState.players[color].every((t) => t.state === "HOME");
-      }
-
-      function wait(ms) {
-        return new Promise((r) => setTimeout(r, ms));
       }
 
       function aiMakeMove() {
@@ -1963,9 +1986,7 @@
             document.getElementById(
               "winnerText"
             ).innerText = `PLAYER ${this.activePlayerIndex} WINS!`;
-            document
-              .getElementById("winnerModal")
-              .classList.add("active");
+            document.getElementById("winnerModal").classList.add("active");
             launchConfetti();
           } else {
             const area = numberPairs[activePlayer.position];
@@ -2001,25 +2022,25 @@
         const color = SNAKE_PLAYER_COLORS[activeIndex] || "red";
         statusText.innerHTML = `<span class="turn-badge" style="background:var(--${color})"></span>Snakes & Ladders - Player ${activeIndex}'s Turn`;
         updateDiceActiveBorder(color);
+        diceLabel.innerText = "Tap Dice";
       }
 
       function rollDiceSnake() {
         ensureSnakeGame();
         if (snakeGame.gameOver) return;
 
-        diceEl.classList.add("rolling");
         diceLabel.innerText = "Rolling...";
         playSound("roll");
 
+        const die1 = snakeGame.getRandomDieNum();
+        const die2 = snakeGame.getRandomDieNum();
+        drawDice(die1);
+
         setTimeout(() => {
-          diceEl.classList.remove("rolling");
-          const die1 = snakeGame.getRandomDieNum();
-          const die2 = snakeGame.getRandomDieNum();
-          drawDice(die1);
           diceLabel.innerText = `${die1} + ${die2}`;
           const msg = snakeGame.play(die1, die2);
           console.log(msg);
-        }, 500);
+        }, diceSpinDuration + 50);
       }
 
       /* ===== BOARD TOGGLER (FLIP) ===== */
@@ -2043,11 +2064,11 @@
             gameState.activeColors[gameState.currentTurnIndex] || "red";
           statusText.innerHTML = `<span class="turn-badge" style="background:var(--${color})"></span>${color.toUpperCase()}'s Turn`;
           updateDiceActiveBorder(color);
-          startTimer();
+          restartTimerIfLudo();
         }
       });
 
-      /* ===== DRAGGABLE DICE ===== */
+      /* ===== DRAGGABLE DICE PANEL ===== */
       let isDraggingDice = false;
       let dragStartX = 0;
       let dragStartY = 0;
@@ -2111,10 +2132,11 @@
       window.addEventListener("mouseup", onDiceDragEnd);
       window.addEventListener("touchend", onDiceDragEnd);
 
-      // Game starts when you hit Start Game in settings modal.
+      // Game starts after settings -> Start Game
     </script>
   </body>
 </html>
+
 
 
 
