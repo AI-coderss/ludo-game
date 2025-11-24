@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>Ludo + Snakes & Ladders with CSS 3D Plastic Dice</title>
+    <title>Ludo + Snakes & Ladders with Realistic 3D Dice</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&display=swap");
 
@@ -51,6 +51,8 @@
         padding: 8px 20px;
         border-radius: 30px;
         margin-bottom: 5px;
+        flex-wrap: wrap;
+        justify-content: center;
       }
 
       .wins-tracker {
@@ -60,6 +62,8 @@
         background: rgba(0, 0, 0, 0.3);
         padding: 5px 15px;
         border-radius: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
       }
 
       .win-count {
@@ -119,14 +123,14 @@
       }
 
       .status-display {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: bold;
         min-width: 250px;
         text-align: center;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 20px;
+        gap: 12px;
       }
 
       .turn-badge {
@@ -275,38 +279,39 @@
         opacity: 0.5;
       }
 
+      /* --- Ludo tokens: circular, realistic, no inner dot --- */
       .token {
-        width: 70%;
-        height: 70%;
-        border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-        z-index: 10;
+        width: 65%;
+        height: 65%;
         position: absolute;
+        cursor: pointer;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5),
+          inset 0 2px 4px rgba(255, 255, 255, 0.6);
+        background-size: 150% 150%;
       }
 
       .token.red {
-        background: var(--red);
-        background-image: linear-gradient(135deg, #ff6b81, #c0392b);
+        background: radial-gradient(circle at 30% 20%, #ffe6ea, #c0392b);
       }
       .token.green {
-        background: var(--green);
-        background-image: linear-gradient(135deg, #58d68d, #27ae60);
+        background: radial-gradient(circle at 30% 20%, #e8ffe6, #27ae60);
       }
       .token.yellow {
-        background: var(--yellow);
-        background-image: linear-gradient(135deg, #f4d03f, #f39c12);
+        background: radial-gradient(circle at 30% 20%, #fff9e0, #f39c12);
       }
       .token.blue {
-        background: var(--blue);
-        background-image: linear-gradient(135deg, #5dade2, #2980b9);
+        background: radial-gradient(circle at 30% 20%, #e6f3ff, #2980b9);
       }
 
       .token.active-turn {
         animation: bounce 0.8s infinite alternate;
-        box-shadow: 0 0 10px 4px white;
+        box-shadow: 0 0 10px 4px white, 0 4px 8px rgba(0, 0, 0, 0.6);
         z-index: 20;
       }
 
@@ -314,15 +319,16 @@
         width: 55%;
         height: 55%;
       }
+
       .token:hover {
-        transform: scale(1.1);
+        transform: translateY(-3px) scale(1.05);
       }
 
       .token.in-base {
         position: static;
         width: 80%;
         height: 80%;
-        box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
+        box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.6);
       }
 
       @keyframes bounce {
@@ -330,7 +336,7 @@
           transform: translateY(0);
         }
         to {
-          transform: translateY(-5px);
+          transform: translateY(-6px);
         }
       }
 
@@ -391,25 +397,60 @@
         position: relative;
       }
 
+      /* --- Snakes & Ladders tokens: circular, same style as Ludo --- */
       .board__player {
         grid-area: one;
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 70%;
-        height: 70%;
-        font-size: 1.1rem;
+        width: 60%;
+        height: 60%;
+        margin: auto;
+        font-size: 0.8rem;
         color: #fff;
+        font-weight: bold;
         border-radius: 50%;
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7),
+          inset 0 2px 4px rgba(255, 255, 255, 0.7);
+        background-size: 150% 150%;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
       }
 
       .board__player--1 {
-        background: var(--red);
+        background: radial-gradient(circle at 30% 20%, #ffe6ea, #c0392b);
       }
 
       .board__player--2 {
-        background: #000;
+        background: radial-gradient(circle at 30% 20%, #e6f3ff, #2980b9);
+      }
+
+      @keyframes snakeGlitter {
+        0% {
+          transform: translateY(0) scale(1);
+          box-shadow: 0 6px 10px rgba(0, 0, 0, 0.65),
+            0 0 4px rgba(255, 255, 255, 0.8);
+          filter: drop-shadow(0 0 0px rgba(255, 255, 255, 0.3));
+          background-position: 0% 50%;
+        }
+        50% {
+          transform: translateY(-2px) scale(1.03);
+          box-shadow: 0 8px 14px rgba(0, 0, 0, 0.8),
+            0 0 10px rgba(255, 255, 255, 0.95);
+          filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7));
+          background-position: 100% 50%;
+        }
+        100% {
+          transform: translateY(0) scale(1.01);
+          box-shadow: 0 7px 12px rgba(0, 0, 0, 0.7),
+            0 0 6px rgba(255, 255, 255, 0.7);
+          filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.4));
+          background-position: 0% 50%;
+        }
+      }
+
+      .board__player.glitter {
+        animation: snakeGlitter 1.2s ease-in-out infinite alternate;
       }
 
       .board__label {
@@ -440,7 +481,6 @@
         border: 3px solid rgba(255, 255, 255, 0.7);
         --active-color: var(--red);
         touch-action: none;
-        position: fixed;
       }
 
       .dice-area.active-border {
@@ -465,7 +505,6 @@
         }
       }
 
-      /* 3D Scene Container (from your design) */
       .scene {
         width: 80px;
         height: 80px;
@@ -474,7 +513,6 @@
         position: relative;
       }
 
-      /* The Dice Object */
       .scene .dice {
         width: 100%;
         height: 100%;
@@ -484,29 +522,22 @@
         transform: rotateX(-30deg) rotateY(-45deg);
       }
 
-      /* Individual Faces */
       .face {
         position: absolute;
         width: 80px;
         height: 80px;
         border-radius: 16px;
-
-        /* REALISTIC WHITE PLASTIC STYLE */
         background: #f7f7f7;
         border: 1px solid #e0e0e0;
-
         box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05),
           inset 2px 2px 5px rgba(255, 255, 255, 1),
           inset -2px -2px 8px rgba(0, 0, 0, 0.1);
-
         backface-visibility: hidden;
-
         display: flex;
         justify-content: center;
         align-items: center;
       }
 
-      /* Engraved Pips (Dots) */
       .pip {
         display: block;
         width: 15px;
@@ -514,13 +545,11 @@
         border-radius: 50%;
         background: #1a1a1a;
         position: absolute;
-
         box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.8),
           inset -1px -1px 2px rgba(255, 255, 255, 0.2),
           0 1px 1px rgba(255, 255, 255, 0.5);
       }
 
-      /* Face Positioning */
       .front {
         transform: rotateY(0deg) translateZ(40px);
       }
@@ -540,7 +569,6 @@
         transform: rotateX(-90deg) translateZ(40px);
       }
 
-      /* Pip Layouts */
       .face[data-val="1"] .pip:nth-child(1),
       .face[data-val="3"] .pip:nth-child(2),
       .face[data-val="5"] .pip:nth-child(5) {
@@ -575,7 +603,6 @@
         right: 12px;
       }
 
-      /* Result Text (anchored to dice-area) */
       #result-display {
         position: absolute;
         top: -8px;
@@ -598,7 +625,6 @@
         opacity: 1;
       }
 
-      /* Modal etc */
       .modal {
         display: none;
         position: fixed;
@@ -748,8 +774,6 @@
 
       @media (max-width: 600px) {
         .controls {
-          flex-wrap: wrap;
-          justify-content: center;
           width: 95%;
           padding: 6px 10px;
           gap: 6px;
@@ -825,10 +849,8 @@
       preload="auto"
     ></audio>
 
-    <!-- BOARD WRAPPER (Ludo + Snake & Ladder share same space) -->
     <div class="board-wrapper">
       <div class="board-inner" id="boardInner">
-        <!-- LUDO FRONT -->
         <div class="ludo-board" id="board">
           <div class="base base-red"></div>
           <div class="base base-green"></div>
@@ -837,7 +859,6 @@
           <div class="center"></div>
         </div>
 
-        <!-- SNAKES & LADDERS BACK -->
         <div class="snake-board" id="snakeBoard">
           <div class="snake-board-inner">
             <div class="board">
@@ -850,43 +871,36 @@
       </div>
     </div>
 
-    <!-- DICE AREA WITH CSS 3D PLASTIC DICE (draggable) -->
     <div class="dice-area" id="diceControl">
       <div id="result-display">Click to Roll</div>
       <div class="scene" id="diceScene">
         <div class="dice" id="dice">
-          <!-- 1 -->
           <div class="face front" data-val="1">
             <span class="pip"></span>
           </div>
 
-          <!-- 6 -->
           <div class="face back" data-val="6">
             <span class="pip tl"></span><span class="pip tr"></span>
             <span class="pip ml"></span><span class="pip mr"></span>
             <span class="pip bl"></span><span class="pip br"></span>
           </div>
 
-          <!-- 5 -->
           <div class="face right" data-val="5">
             <span class="pip tl"></span><span class="pip tr"></span>
             <span class="pip bl"></span><span class="pip br"></span>
             <span class="pip"></span>
           </div>
 
-          <!-- 2 -->
           <div class="face left" data-val="2">
             <span class="pip tl"></span><span class="pip br"></span>
           </div>
 
-          <!-- 3 -->
           <div class="face top" data-val="3">
             <span class="pip tl"></span>
             <span class="pip"></span>
             <span class="pip br"></span>
           </div>
 
-          <!-- 4 -->
           <div class="face bottom" data-val="4">
             <span class="pip tl"></span><span class="pip tr"></span>
             <span class="pip bl"></span><span class="pip br"></span>
@@ -901,7 +915,6 @@
       </div>
     </div>
 
-    <!-- SETTINGS MODAL -->
     <div class="modal active" id="settingsModal">
       <div class="modal-content">
         <h2>Game Settings</h2>
@@ -945,7 +958,6 @@
       </div>
     </div>
 
-    <!-- WINNER MODAL -->
     <div class="modal" id="winnerModal">
       <div class="modal-content">
         <h2 id="winnerText">RED WINS!</h2>
@@ -965,7 +977,6 @@
     </div>
 
     <script>
-      /* ===== BASIC AUDIO HELPERS ===== */
       const audioCtx = new (window.AudioContext ||
         window.webkitAudioContext)();
       const diceAudio = document.getElementById("diceSound");
@@ -991,15 +1002,15 @@
           osc.frequency.setValueAtTime(400, audioCtx.currentTime);
           osc.frequency.exponentialRampToValueAtTime(
             600,
-            audioCtx.currentTime + 0.1
+            audioCtx.currentTime + 0.15
           );
           gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
           gain.gain.exponentialRampToValueAtTime(
             0.01,
-            audioCtx.currentTime + 0.1
+            audioCtx.currentTime + 0.15
           );
           osc.start();
-          osc.stop(audioCtx.currentTime + 0.1);
+          osc.stop(audioCtx.currentTime + 0.15);
         } else if (type === "capture") {
           osc.type = "sawtooth";
           osc.frequency.setValueAtTime(150, audioCtx.currentTime);
@@ -1084,7 +1095,6 @@
         }, 250);
       }
 
-      /* ===== DOM REFERENCES ===== */
       const boardEl = document.getElementById("board");
       const boardInnerEl = document.getElementById("boardInner");
 
@@ -1099,14 +1109,13 @@
       const resultDisplay = document.getElementById("result-display");
       const diceLabel = document.getElementById("diceLabel");
 
-      /* ===== CSS 3D DICE LOGIC (your design, adapted) ===== */
       const faceRotations = {
-        1: [0, 0], // front
-        6: [0, 180], // back
-        5: [0, -90], // right
-        2: [0, 90], // left
-        3: [-90, 0], // top
-        4: [90, 0], // bottom
+        1: [0, 0],
+        6: [0, 180],
+        5: [0, -90],
+        2: [0, 90],
+        3: [-90, 0],
+        4: [90, 0],
       };
 
       let currentRotation = { x: -30, y: -45 };
@@ -1155,7 +1164,6 @@
         }, diceSpinDuration);
       }
 
-      /* ===== LUDO CONSTANTS & STATE ===== */
       const ALL_COLORS = ["red", "green", "blue", "yellow"];
       const TURN_DURATION = 30;
 
@@ -1459,13 +1467,13 @@
           token.stepsTaken = 0;
           playSound("move");
           renderTokens();
-          await wait(300);
+          await wait(500);
         } else {
           for (let i = 0; i < roll; i++) {
             token.stepsTaken++;
             playSound("move");
             renderTokens();
-            await wait(250);
+            await wait(500);
           }
         }
 
@@ -1651,7 +1659,6 @@
         updateTimerAndStatusForTurn();
       }
 
-      /* ===== SETTINGS MODAL ===== */
       let settingMode = "ai";
       let selectedColors = ["red", "green", "blue", "yellow"];
 
@@ -1700,7 +1707,6 @@
         clearInterval(gameState.timer);
       };
 
-      /* ===== LUDO DICE CLICK HANDLER ===== */
       diceSceneEl.addEventListener("click", () => {
         if (isDiceAnimating) return;
         if (currentBoardMode === "snake") {
@@ -1781,7 +1787,6 @@
         startMoveSequence(bestToken);
       }
 
-      /* ===== SNAKES & LADDERS ===== */
       const numberPairs = {
         1: "one",
         2: "two",
@@ -1940,42 +1945,81 @@
           if (this.labelEl) this.labelEl.textContent = msg;
         }
 
-        play(die1, die2) {
+        async animateSteps(player, path, type = "move") {
+          if (!path || !path.length) return;
+          for (const pos of path) {
+            player.position = pos;
+            const area = numberPairs[pos];
+            if (area && player.node) {
+              player.node.style.gridArea = area;
+            }
+
+            if (type === "ladder") playSound("ladder");
+            else if (type === "snake") playSound("snake");
+            else playSound("move");
+
+            await wait(400);
+          }
+        }
+
+        async play(roll) {
           if (this.gameOver) {
             this.setMessage("Game over!");
             return "Game over!";
           }
 
-          const dieTotal = die1 + die2;
+          const dieTotal = roll;
           const activePlayer = this.players[this.activePlayerIndex];
           const ladders = SNAKE_LADDERS_MAP.ladders;
           const snakes = SNAKE_LADDERS_MAP.snakes;
           let message = "";
 
-          if (dieTotal > 12) {
-            message = "Greater Numbers than 6 are now allowed!";
-            this.setMessage(message);
-            return message;
+          const startPos = activePlayer.position;
+          let targetPos = startPos + dieTotal;
+          let path = [];
+
+          if (targetPos <= 100) {
+            for (let p = startPos + 1; p <= targetPos; p++) {
+              path.push(p);
+            }
+          } else {
+            const overshoot = targetPos - 100;
+            for (let p = startPos + 1; p <= 100; p++) {
+              path.push(p);
+            }
+            for (let p = 99; p >= 100 - overshoot; p--) {
+              path.push(p);
+            }
+            targetPos = 100 - overshoot;
           }
 
-          activePlayer.position += dieTotal;
+          // Normal slow square-by-square movement with "move" sound
+          await this.animateSteps(activePlayer, path, "move");
 
-          if (activePlayer.position > 100) {
-            activePlayer.position =
-              100 - (activePlayer.position - 100);
-          }
+          // 👉 Immediate ladder climb / snake slide with sound
+          let finalPos = targetPos;
 
-          if (ladders[activePlayer.position]) {
-            activePlayer.position = ladders[activePlayer.position];
+          if (ladders[finalPos]) {
+            finalPos = ladders[finalPos];
+            activePlayer.position = finalPos;
+            const area = numberPairs[finalPos];
+            if (area && activePlayer.node) {
+              activePlayer.node.style.gridArea = area;
+            }
             playSound("ladder");
-          }
-
-          if (snakes[activePlayer.position]) {
-            activePlayer.position = snakes[activePlayer.position];
+          } else if (snakes[finalPos]) {
+            finalPos = snakes[finalPos];
+            activePlayer.position = finalPos;
+            const area = numberPairs[finalPos];
+            if (area && activePlayer.node) {
+              activePlayer.node.style.gridArea = area;
+            }
             playSound("snake");
+          } else {
+            activePlayer.position = finalPos;
           }
 
-          if (activePlayer.position === 100) {
+          if (finalPos === 100) {
             this.gameOver = true;
             if (activePlayer.node) {
               activePlayer.node.style.gridArea = "onehundred";
@@ -1989,15 +2033,15 @@
             document.getElementById("winnerModal").classList.add("active");
             launchConfetti();
           } else {
-            const area = numberPairs[activePlayer.position];
+            const area = numberPairs[finalPos];
             if (area && activePlayer.node) {
               activePlayer.node.style.gridArea = area;
             }
-            message = `Player ${this.activePlayerIndex} is on square ${activePlayer.position}`;
+            message = `Player ${this.activePlayerIndex} is on square ${finalPos}`;
             this.setMessage(message);
           }
 
-          if (die1 !== die2 && !this.gameOver) {
+          if (!this.gameOver) {
             this.activePlayerIndex = this.activePlayerIndex === 1 ? 2 : 1;
           }
 
@@ -2023,27 +2067,32 @@
         statusText.innerHTML = `<span class="turn-badge" style="background:var(--${color})"></span>Snakes & Ladders - Player ${activeIndex}'s Turn`;
         updateDiceActiveBorder(color);
         diceLabel.innerText = "Tap Dice";
+
+        document
+          .querySelectorAll(".board__player")
+          .forEach((p) => p.classList.remove("glitter"));
+        const activePiece = document.querySelector(
+          `.board__player--${activeIndex}`
+        );
+        if (activePiece) activePiece.classList.add("glitter");
       }
 
-      function rollDiceSnake() {
+      async function rollDiceSnake() {
         ensureSnakeGame();
         if (snakeGame.gameOver) return;
 
         diceLabel.innerText = "Rolling...";
         playSound("roll");
 
-        const die1 = snakeGame.getRandomDieNum();
-        const die2 = snakeGame.getRandomDieNum();
-        drawDice(die1);
+        const roll = snakeGame.getRandomDieNum();
+        drawDice(roll);
 
-        setTimeout(() => {
-          diceLabel.innerText = `${die1} + ${die2}`;
-          const msg = snakeGame.play(die1, die2);
-          console.log(msg);
-        }, diceSpinDuration + 50);
+        await wait(diceSpinDuration + 50);
+        diceLabel.innerText = roll;
+        const msg = await snakeGame.play(roll);
+        console.log(msg);
       }
 
-      /* ===== BOARD TOGGLER (FLIP) ===== */
       toggleBoardBtn.addEventListener("click", () => {
         if (currentBoardMode === "ludo") {
           currentBoardMode = "snake";
@@ -2065,10 +2114,13 @@
           statusText.innerHTML = `<span class="turn-badge" style="background:var(--${color})"></span>${color.toUpperCase()}'s Turn`;
           updateDiceActiveBorder(color);
           restartTimerIfLudo();
+
+          document
+            .querySelectorAll(".board__player")
+            .forEach((p) => p.classList.remove("glitter"));
         }
       });
 
-      /* ===== DRAGGABLE DICE PANEL ===== */
       let isDraggingDice = false;
       let dragStartX = 0;
       let dragStartY = 0;
@@ -2131,11 +2183,12 @@
       window.addEventListener("touchmove", onDiceDragMove, { passive: false });
       window.addEventListener("mouseup", onDiceDragEnd);
       window.addEventListener("touchend", onDiceDragEnd);
-
-      // Game starts after settings -> Start Game
     </script>
   </body>
 </html>
+
+
+
 
 
 
