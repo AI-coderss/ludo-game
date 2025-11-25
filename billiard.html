@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Mobile-first viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pool Master 2D - Competitive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&display=swap');
+
+    :root{
+      --ui-h: 92px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --gold: #ffd700;
+      --ink: #070a11;
+      --ink2:#0b1020;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overscroll-behavior: none;
+      background: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Teko', sans-serif;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* dvh fixes mobile address-bar resizing */
+    #game-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100dvh;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bot);
+      padding-left: var(--safe-left);
+      padding-right: var(--safe-right);
+      background: radial-gradient(circle at 30% 20%, #ffffff 0%, #f2f4f7 55%, #eef1f5 100%);
+    }
+
+    /* ===== Dashboard (BLACK) ===== */
+    #ui-bar {
+      height: var(--ui-h);
+      background: linear-gradient(180deg, var(--ink) 0%, var(--ink2) 60%, var(--ink) 100%);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      align-items: center;
+      padding: 10px 10px;
+      box-shadow: 0 14px 40px rgba(2, 6, 23, 0.35);
+      z-index: 10;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.18);
+      flex-shrink: 0;
+      gap: 8px 10px;
+    }
+
+    /* Turn display (explicit active player) */
+    #turn-display {
+      grid-column: 1 / 2;
+      font-size: 20px;
+      color: var(--gold);
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      line-height: 1.05;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    #turn-display .sub {
+      display: block;
+      margin-top: 3px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.72);
+      letter-spacing: 0.25px;
+      text-transform: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Timer box */
+    #timer-box{
+      grid-column: 2 / 3;
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 20%, rgba(255,215,0,0.10), transparent 55%),
+                  linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,215,0,0.22);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 10px 22px rgba(0,0,0,0.35);
+      min-width: 104px;
+    }
+    #timer-label{
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    #timer-value{
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.6px;
+      min-width: 36px;
+      text-align: right;
+    }
+    #timer-value.warn { color: #ff7a7a; text-shadow: 0 0 18px rgba(255, 80, 80, 0.35); }
+
+    /* Player panels (small, mobile-friendly) */
+    .player-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: #ffffff;
+      min-width: 0;
+      padding: 8px 8px 7px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .player-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 16px;
+      white-space: nowrap;
+      min-width: 0;
+      position: relative;
+      z-index: 2;
+    }
+    .player-line .label { overflow: hidden; text-overflow: ellipsis; }
+    .player-line span { color: rgba(255,255,255,0.68); margin-left: 6px; font-size: 0.92em; }
+
+    /* Active player (BOUNCE, not pulse) */
+    .player-panel.active {
+      border-color: rgba(255,215,0,0.40);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,215,0,0.18),
+        0 0 0 2px rgba(255,215,0,0.08),
+        0 18px 36px rgba(0,0,0,0.45);
+      animation: cardBounce 0.95s ease-in-out infinite;
+    }
+    .player-panel.active .player-line {
+      animation: textBounce 0.95s ease-in-out infinite;
+    }
+    .player-panel.active::after{
+      content:"";
+      position:absolute;
+      top:10px; right:10px;
+      width:9px; height:9px;
+      border-radius:50%;
+      background: var(--gold);
+      box-shadow: 0 0 18px rgba(255,215,0,0.35);
+      animation: dotBounce 0.95s ease-in-out infinite;
+      pointer-events:none;
+      z-index: 3;
+    }
+    @keyframes cardBounce {
+      0%, 100% { transform: translateY(0px); }
+      40% { transform: translateY(-3px); }
+      70% { transform: translateY(0px); }
+    }
+    @keyframes textBounce {
+      0%, 100% { transform: translateY(0px); }
+      40% { transform: translateY(-2px); }
+      70% { transform: translateY(0px); }
+    }
+    @keyframes dotBounce {
+      0%, 100% { transform: translateY(0px); box-shadow: 0 0 16px rgba(255,215,0,0.25); }
+      40% { transform: translateY(-2px); box-shadow: 0 0 22px rgba(255,215,0,0.45); }
+      70% { transform: translateY(0px); }
+    }
+
+    .dim { opacity: 0.60; }
+
+    /* Potted group tray (small) */
+    .tray {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      padding-bottom: 1px;
+      position: relative;
+      z-index: 2;
+      min-height: 18px;
+    }
+    .tray::-webkit-scrollbar { display: none; }
+
+    .mini-ball {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.25);
+      flex: 0 0 auto;
+      position: relative;
+      display: grid;
+      place-items: center;
+      font-size: 8px;
+      font-weight: 800;
+      color: rgba(0,0,0,0.9);
+      background: #fff;
+    }
+    .mini-ball .n {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+      display: grid;
+      place-items: center;
+      line-height: 1;
+      transform: translateY(0.2px);
+    }
+
+    /* Desktop/tablet layout */
+    @media (min-width: 820px) {
+      :root { --ui-h: 92px; }
+      #ui-bar {
+        grid-template-columns: 1.2fr 0.65fr 1fr 1fr;
+        grid-template-rows: auto;
+        gap: 0 12px;
+        padding: 12px 12px;
+      }
+      #turn-display { grid-column: 1 / 2; font-size: 30px; }
+      #turn-display .sub { font-size: 16px; }
+      #timer-box { grid-column: 2 / 3; min-width: 128px; padding: 8px 10px; }
+      #timer-label { font-size: 14px; }
+      #timer-value { font-size: 24px; min-width: 44px; }
+
+      .player-panel { align-items: flex-end; padding: 10px 10px 8px; }
+      #p1-status { grid-column: 3 / 4; }
+      #p2-status { grid-column: 4 / 5; }
+      .player-line { font-size: 22px; }
+      .mini-ball { width: 20px; height: 20px; font-size: 10px; }
+      .tray { min-height: 22px; }
+    }
+
+    /* EXTRA compact phone dashboard */
+    @media (max-width: 420px) {
+      :root { --ui-h: 74px; }
+      #ui-bar { padding: 8px 8px; gap: 6px 8px; }
+      #turn-display { font-size: 18px; }
+      #turn-display .sub { font-size: 12px; margin-top: 2px; }
+      #timer-box { min-width: 90px; padding: 5px 7px; border-radius: 11px; }
+      #timer-label { font-size: 12px; }
+      #timer-value { font-size: 16px; min-width: 30px; }
+
+      .player-panel { padding: 7px 7px 6px; border-radius: 13px; }
+      .player-line { font-size: 15px; }
+      .mini-ball { width: 15px; height: 15px; }
+      .mini-ball .n { width: 9px; height: 9px; font-size: 7px; }
+      .tray { min-height: 16px; gap: 5px; }
+    }
+
+    /* Game Area */
+    #table-wrapper {
+      flex: 1;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      width: 100%;
+      padding: 10px;
+      touch-action: none;
+    }
+
+    #game-scaler {
+      position: relative;
+      transform-origin: center;
+      display: flex;
+      align-items: stretch;
+      box-shadow: 0 20px 60px rgba(2, 6, 23, 0.18);
+      will-change: transform;
+    }
+
+    canvas {
+      display: block;
+      border-radius: 12px 12px 0 0;
+      cursor: crosshair;
+      touch-action: none;
+      background: transparent;
+    }
+
+    /* Mobile portrait: rail below */
+    #side-rail {
+      width: 100%;
+      height: 70px;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,0.12), transparent 55%),
+        radial-gradient(circle at 75% 60%, rgba(0,0,0,0.12), transparent 60%),
+        repeating-linear-gradient(90deg,
+          rgba(78, 43, 20, 0.16) 0px, rgba(78, 43, 20, 0.16) 7px,
+          rgba(110, 63, 32, 0.22) 7px, rgba(110, 63, 32, 0.22) 14px,
+          rgba(142, 84, 42, 0.18) 14px, rgba(142, 84, 42, 0.18) 19px),
+        linear-gradient(to bottom, #7a4a2a, #5e3614);
+      border-top: 4px solid rgba(61, 34, 11, 0.85);
+      border-radius: 0 0 12px 12px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0 12px;
+      box-shadow: inset 0 8px 18px rgba(0,0,0,0.25);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .rail-channel {
+      width: 100%;
+      height: 70%;
+      background:
+        radial-gradient(circle at 25% 40%, rgba(255,255,255,0.06), transparent 60%),
+        linear-gradient(to bottom, #3d220b, #2b1708);
+      border-radius: 16px;
+      box-shadow: inset 2px 2px 10px rgba(0,0,0,0.65);
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+    .rail-channel::-webkit-scrollbar { display: none; }
+
+    .potted-ball {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      box-shadow: 2px 4px 10px rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.18);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: black;
+      font-weight: bold;
+      position: relative;
+      animation: dropIn 0.25s ease-out;
+    }
+    .potted-ball span {
+      background: rgba(255,255,255,0.85);
+      border-radius: 50%;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 9px;
+    }
+    @keyframes dropIn {
+      from { transform: translateY(-80px) rotate(120deg); opacity: 0; }
+      to { transform: translateY(0) rotate(0); opacity: 1; }
+    }
+
+    /* Desktop/tablet landscape: rail on the right */
+    @media (min-width: 820px) and (orientation: landscape) {
+      #game-scaler { flex-direction: row; align-items: stretch; }
+      canvas { border-radius: 12px 0 0 12px; }
+      #side-rail {
+        width: 70px;
+        height: auto;
+        background:
+          radial-gradient(circle at 30% 25%, rgba(255,255,255,0.12), transparent 55%),
+          radial-gradient(circle at 75% 60%, rgba(0,0,0,0.12), transparent 60%),
+          repeating-linear-gradient(0deg,
+            rgba(78, 43, 20, 0.16) 0px, rgba(78, 43, 20, 0.16) 7px,
+            rgba(110, 63, 32, 0.22) 7px, rgba(110, 63, 32, 0.22) 14px,
+            rgba(142, 84, 42, 0.18) 14px, rgba(142, 84, 42, 0.18) 19px),
+          linear-gradient(to right, #7a4a2a, #5e3614);
+        border-top: none;
+        border-left: 4px solid rgba(61, 34, 11, 0.85);
+        border-radius: 0 12px 12px 0;
+        padding: 12px 0;
+      }
+      .rail-channel {
+        width: 70%;
+        height: 94%;
+        border-radius: 20px;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0;
+        padding: 0 0 10px 0;
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+      .potted-ball { width: 32px; height: 32px; margin-top: -8px; }
+    }
+
+    /* Modals */
+    .modal-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      color: #111827;
+      padding: 20px;
+    }
+    .modal-content {
+      background: #ffffff;
+      border: 2px solid rgba(124, 90, 0, 0.35);
+      padding: 30px;
+      text-align: center;
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(2, 6, 23, 0.18);
+      max-width: 520px;
+      width: 100%;
+    }
+    .btn-primary {
+      background: #ffd700;
+      color: #1e1b2e;
+      font-size: 20px;
+      padding: 12px 20px;
+      border: none;
+      font-family: 'Teko', sans-serif;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px;
+      border-radius: 10px;
+      transition: transform 0.1s, filter 0.2s;
+      width: 88%;
+      box-shadow: 0 10px 20px rgba(124,90,0,0.15);
+    }
+    .btn-primary:hover { filter: brightness(1.03); }
+    .btn-primary:active { transform: scale(0.98); }
+    /* ==== GAME SWITCH POPUP (minimal, glassy) ==== */
+.switchPopup{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 999999;
+  width: min(560px, calc(100% - 24px));
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.45));
+  border: 1px solid rgba(2,6,23,.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 22px 70px rgba(2,6,23,.18);
+  padding: 12px;
+  display:none;
+}
+.switchCard{ display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+.switchTitle{ font: 700 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial; color: rgba(11,18,32,.88); }
+.switchActions{ display:flex; gap: 10px; }
+.switchBtn{
+  border-radius: 14px;
+  padding: 9px 12px;
+  font-weight: 900;
+  border: 1px solid rgba(2,6,23,.12);
+  cursor:pointer;
+}
+.switchBtn.ghost{ background: rgba(255,255,255,.55); color: rgba(11,18,32,.90); }
+.switchBtn.primary{ background: rgba(11,18,32,.92); color:#fff; border-color: rgba(11,18,32,.18); }
+
+  </style>
+</head>
+
+<body>
+  <div id="game-container">
+    <!-- Dashboard -->
+    <div id="ui-bar">
+      <div id="turn-display">POOL MASTER 2D<span class="sub">Choose a mode to start</span></div>
+
+      <div id="timer-box">
+        <div id="timer-label">Timer</div>
+        <div id="timer-value">--</div>
+      </div>
+
+      <div class="player-panel" id="p1-status">
+        <div class="player-line"><div class="label">P1:<span id="p1-type">Open</span></div></div>
+        <div class="tray" id="p1-tray"></div>
+      </div>
+
+      <div class="player-panel" id="p2-status">
+        <div class="player-line"><div class="label">P2:<span id="p2-type">Open</span></div></div>
+        <div class="tray" id="p2-tray"></div>
+      </div>
+    </div>
+
+    <!-- Game Area -->
+    <div id="table-wrapper">
+      <div id="game-scaler" style="flex-direction:column;">
+        <canvas id="poolCanvas"></canvas>
+        <div id="side-rail">
+          <div class="rail-channel" id="ball-return-stack"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Menu Modal -->
+    <div id="main-menu" class="modal-screen">
+      <div class="modal-content">
+        <h1 style="font-size: 48px; margin-bottom: 18px; color: #7c5a00;">POOL MASTER 2D</h1>
+        <p style="margin-bottom: 22px; color: #6b7280;">Drag anywhere to aim &amp; shoot!</p>
+        <button class="btn-primary" onclick="startGame('pvp')">PLAYER vs PLAYER</button>
+        <button class="btn-primary" onclick="startGame('bot')">PLAYER vs COMPUTER</button>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal-screen" style="display:none;">
+      <div class="modal-content">
+        <h1 style="font-size: 48px; margin: 0;" id="winner-text">PLAYER 1 WINS!</h1>
+        <p style="font-size: 24px; margin-top: 10px; color: #4b5563;" id="win-reason"></p>
+        <button class="btn-primary" onclick="showMainMenu()">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+  <!-- ==== GAME SWITCH POPUP (drop-in) ==== -->
+<!-- ==== GAME SWITCH POPUP (drop-in) ==== -->
+<div id="switchPopup" class="switchPopup" style="display:none;">
+  <div class="switchCard">
+    <div class="switchTitle" id="switchTitle">Want to try a different game?</div>
+    <div class="switchActions">
+      <button class="switchBtn ghost" id="switchLater" type="button">Later</button>
+      <button class="switchBtn primary" id="switchGo" type="button">Switch</button>
+    </div>
+  </div>
+</div>
+<!-- ==== END GAME SWITCH POPUP ==== -->
+
+ 
+  <script>
+    /** Audio System (no external files). */
+    const AudioSys = {
+      ctx: null,
+      init() { window.AudioContext = window.AudioContext || window.webkitAudioContext; this.ctx = new AudioContext(); },
+      _ensure() { if (!this.ctx) this.init(); if (this.ctx.state === 'suspended') this.ctx.resume(); },
+      playHit(volume = 1) {
+        this._ensure();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(2000, t);
+        osc.frequency.exponentialRampToValueAtTime(100, t + 0.05);
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(Math.min(volume, 1) * 0.8, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.05);
+      },
+      playPocket() {
+        this._ensure();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(400, t);
+        osc.frequency.exponentialRampToValueAtTime(50, t + 0.3);
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.6, t);
+        gain.gain.linearRampToValueAtTime(0, t + 0.3);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.3);
+      },
+      playRail(volume = 1) {
+        this._ensure();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.linearRampToValueAtTime(50, t + 0.1);
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(Math.min(volume, 1) * 0.5, t);
+        gain.gain.linearRampToValueAtTime(0, t + 0.1);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.1);
+      }
+    };
+
+    class Vec2 {
+      constructor(x, y) { this.x = x; this.y = y; }
+      add(v) { return new Vec2(this.x + v.x, this.y + v.y); }
+      sub(v) { return new Vec2(this.x - v.x, this.y - v.y); }
+      mult(n) { return new Vec2(this.x * n, this.y * n); }
+      mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+      norm() { const m = this.mag(); return m === 0 ? new Vec2(0,0) : new Vec2(this.x/m, this.y/m); }
+      dot(v) { return this.x * v.x + this.y * v.y; }
+      dist(v) { return Math.sqrt((this.x - v.x) ** 2 + (this.y - v.y) ** 2); }
+    }
+
+    const CONFIG = {
+      tableWidth: 800,
+      tableHeight: 400,
+      railSize: 40,
+      ballRadius: 10,
+      pocketRadius: 18,
+      friction: 0.985,
+      stopThreshold: 0.05,
+      maxPower: 30,
+      colors: { felt: '#27ae60', pocket: '#0b0b0b' },
+      ballColors: ['#ffffff','#e1b12c','#0984e3','#d63031','#6c5ce7','#e84393','#00b894','#b71540','#2d3436',
+                  '#ffeaa7','#74b9ff','#ff7675','#a29bfe','#fd79a8','#55efc4','#81ecec']
+    };
+
+    class Ball {
+      constructor(id, x, y) {
+        this.id = id;
+        this.pos = new Vec2(x, y);
+        this.vel = new Vec2(0, 0);
+        this.radius = CONFIG.ballRadius;
+        this.active = true;
+        this.isStriped = id > 8;
+        this.isSolid = id > 0 && id < 8;
+        this.color = CONFIG.ballColors[id > 8 ? id - 8 : id];
+        if (id === 8) this.color = CONFIG.ballColors[8];
+        if (id === 0) this.color = CONFIG.ballColors[0];
+      }
+      update() {
+        if (!this.active) return;
+        this.pos = this.pos.add(this.vel);
+        this.vel = this.vel.mult(CONFIG.friction);
+        if (this.vel.mag() < CONFIG.stopThreshold) this.vel = new Vec2(0,0);
+      }
+      draw(ctx) {
+        if (!this.active) return;
+        ctx.save();
+        ctx.translate(this.pos.x, this.pos.y);
+
+        ctx.beginPath();
+        ctx.arc(3, 3, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.id === 0 ? '#f7f7f7' : (this.id === 8 ? '#111' : this.color);
+        ctx.fill();
+
+        if (this.isStriped && this.id !== 0) {
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.rect(-this.radius, -this.radius/1.8, this.radius*2, this.radius*1.1);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+        }
+
+        if (this.id !== 0) {
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius * 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,255,255,0.92)';
+          ctx.fill();
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 9px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.id, 0, 1);
+        }
+
+        ctx.beginPath();
+        ctx.arc(-4, -4, 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    class Game {
+      constructor() {
+        this.canvas = document.getElementById('poolCanvas');
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+        this.scaler = document.getElementById('game-scaler');
+        this.sideRail = document.getElementById('side-rail');
+
+        this.balls = [];
+        this.pockets = [];
+        this.cueBall = null;
+        this.tableCache = null;
+
+        this.isDragging = false;
+        this.isPlacingCue = false;
+        this.ballInHand = false;
+        this.ballInHandCandidate = null;
+
+        this.dragStart = new Vec2(0,0);
+        this.dragCurrent = new Vec2(0,0);
+        this.mousePos = new Vec2(0,0);
+
+        this.gameState = 'menu';
+        this.gameMode = null;
+
+        this.players = [{name:'Player 1', type:null},{name:'Player 2', type:null}];
+        this.turnIndex = 0;
+        this.tableOpen = true;
+
+        this.ballsPottedThisTurn = [];
+        this.foulThisTurn = false;
+
+        this.shotInProgress = false;
+        this.shotOwner = 0;
+        this.botScheduled = false;
+
+        this.pottedByPlayer = [[], []];
+
+        // ===== Timer =====
+        this.turnTimeLimit = 30;   // seconds per turn
+        this.timeLeft = this.turnTimeLimit;
+        this._tLast = performance.now();
+
+        this._orient = null;
+
+        this.applyOrientation(true);
+        this.setupRack();
+        this.setupResponsiveResize();
+        this.resize();
+
+        const inputTarget = this.canvas;
+
+        inputTarget.addEventListener('mousedown', e => this.handleInputStart(e));
+        window.addEventListener('mousemove', e => this.handleInputMove(e));
+        window.addEventListener('mouseup', e => this.handleInputEnd(e));
+
+        inputTarget.addEventListener('touchstart', e => {
+          if (e.cancelable) e.preventDefault();
+          this.handleInputStart(e.changedTouches[0]);
+        }, {passive:false});
+
+        window.addEventListener('touchmove', e => {
+          if ((this.isDragging || this.isPlacingCue) && e.cancelable) e.preventDefault();
+          this.handleInputMove(e.changedTouches[0]);
+        }, {passive:false});
+
+        window.addEventListener('touchend', e => this.handleInputEnd(e.changedTouches[0]));
+
+        this.loop();
+      }
+
+      resetTurnTimer() {
+        this.timeLeft = this.turnTimeLimit;
+        this._tLast = performance.now();
+        this.updateTimerUI();
+      }
+
+      updateTimerUI() {
+        const el = document.getElementById('timer-value');
+        if (this.gameState !== 'playing') {
+          el.textContent = "--";
+          el.classList.remove('warn');
+          return;
+        }
+        const t = Math.max(0, Math.ceil(this.timeLeft));
+        el.textContent = String(t).padStart(2, '0');
+        if (t <= 7) el.classList.add('warn');
+        else el.classList.remove('warn');
+      }
+
+      tickTimer() {
+        const now = performance.now();
+        const dt = (now - this._tLast) / 1000;
+        this._tLast = now;
+
+        if (this.gameState !== 'playing') return;
+
+        // Pause timer while balls are moving
+        if (this.ballsMoving()) return;
+
+        this.timeLeft -= dt;
+
+        if (this.timeLeft <= 0) {
+          this.timeLeft = 0;
+          this.updateTimerUI();
+          this.onTimerExpired();
+        } else {
+          this.updateTimerUI();
+        }
+      }
+
+      onTimerExpired() {
+        if (this.gameState !== 'playing') return;
+        if (this.ballsMoving()) return;
+
+        const name = this.players[this.turnIndex]?.name || "Player";
+        document.getElementById('turn-display').innerHTML =
+          `ACTIVE: ${name}<span class="sub">⏱️ Time's up — turn passed</span>`;
+
+        setTimeout(() => {
+          if (this.gameState !== 'playing') return;
+          if (this.ballsMoving()) return;
+          this.changeTurn(false);
+        }, 450);
+      }
+
+      detectOrientation() {
+        const isPortrait = window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
+        const smallScreen = Math.min(window.innerWidth, window.innerHeight) <= 900;
+        return (isPortrait && smallScreen) ? "portrait" : "landscape";
+      }
+
+      applyOrientation(init=false) {
+        const next = this.detectOrientation();
+        if (!init && next === this._orient) return;
+
+        const prevW = CONFIG.tableWidth;
+        const prevH = CONFIG.tableHeight;
+
+        this._orient = next;
+
+        if (next === "portrait") {
+          CONFIG.tableWidth = 420;
+          CONFIG.tableHeight = 840;
+          this.scaler.style.flexDirection = "column";
+        } else {
+          CONFIG.tableWidth = 840;
+          CONFIG.tableHeight = 420;
+          this.scaler.style.flexDirection = "";
+        }
+
+        if (!init && this.balls.length) {
+          const sx = CONFIG.tableWidth / prevW;
+          const sy = CONFIG.tableHeight / prevH;
+          this.balls.forEach(b => {
+            b.pos = new Vec2(b.pos.x * sx, b.pos.y * sy);
+            b.vel = new Vec2(b.vel.x * sx, b.vel.y * sy);
+          });
+        }
+
+        this.rebuildCanvasTableAndPockets();
+
+        if (this.cueBall) {
+          this.cueBall.pos = this.clampToTable(this.cueBall.pos);
+          this.cueBall.vel = new Vec2(0,0);
+          this.cueBall.active = true;
+        }
+      }
+
+      rebuildCanvasTableAndPockets() {
+        this.initTable();
+
+        const dpr = window.devicePixelRatio || 1;
+        const totalW = CONFIG.tableWidth + CONFIG.railSize * 2;
+        const totalH = CONFIG.tableHeight + CONFIG.railSize * 2;
+
+        this.canvas.width = totalW * dpr;
+        this.canvas.height = totalH * dpr;
+        this.canvas.style.width = totalW + "px";
+        this.canvas.style.height = totalH + "px";
+
+        this.ctx.setTransform(1,0,0,1,0,0);
+        this.ctx.scale(dpr, dpr);
+      }
+
+      setupResponsiveResize() {
+        const doResize = () => {
+          this.applyOrientation(false);
+          this.resize();
+        };
+
+        window.addEventListener('resize', doResize);
+        window.addEventListener('orientationchange', () => setTimeout(doResize, 120));
+
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', doResize);
+          window.visualViewport.addEventListener('scroll', doResize);
+        }
+
+        const wrapper = document.getElementById('table-wrapper');
+        try {
+          const ro = new ResizeObserver(() => doResize());
+          ro.observe(wrapper);
+        } catch(_) {}
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => doResize()).catch(() => {});
+        }
+      }
+
+      resize() {
+        const wrapper = document.getElementById('table-wrapper');
+
+        const vvW = window.visualViewport ? window.visualViewport.width : null;
+        const vvH = window.visualViewport ? window.visualViewport.height : null;
+
+        const rect = wrapper.getBoundingClientRect();
+        let availW = (vvW != null ? Math.min(vvW, rect.width) : rect.width);
+        let availH = (vvH != null ? Math.min(vvH, rect.height + 1) : rect.height);
+
+        const cs = getComputedStyle(wrapper);
+        const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+        const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+        availW = Math.max(0, availW - padX);
+        availH = Math.max(0, availH - padY);
+
+        const totalW = CONFIG.tableWidth + CONFIG.railSize * 2;
+        const totalH = CONFIG.tableHeight + CONFIG.railSize * 2;
+
+        const flexDir = getComputedStyle(this.scaler).flexDirection;
+
+        let baseW, baseH;
+        if (flexDir === 'column') {
+          const railH = this.sideRail.getBoundingClientRect().height || 70;
+          baseW = totalW;
+          baseH = totalH + railH;
+        } else {
+          const railW = this.sideRail.getBoundingClientRect().width || 70;
+          baseW = totalW + railW;
+          baseH = totalH;
+        }
+
+        const scale = Math.min(availW / baseW, availH / baseH) * 0.985;
+        const clamped = Math.max(0.2, Math.min(scale, 3.0));
+        this.scaler.style.transform = `scale(${clamped})`;
+      }
+
+      initTable() {
+        const w = CONFIG.tableWidth, h = CONFIG.tableHeight;
+
+        // Portrait pockets: 2 top, 2 middle, 2 bottom (rect-style)
+        if (this._orient === "portrait") {
+          this.pockets = [
+            new Vec2(0, 0),       new Vec2(w, 0),
+            new Vec2(-5, h/2),    new Vec2(w+5, h/2),
+            new Vec2(0, h),       new Vec2(w, h),
+          ];
+        } else {
+          this.pockets = [
+            new Vec2(0, 0),       new Vec2(w/2, -5),  new Vec2(w, 0),
+            new Vec2(0, h),       new Vec2(w/2, h+5), new Vec2(w, h)
+          ];
+        }
+
+        this.preRenderTable();
+      }
+
+      preRenderTable() {
+        const dpr = window.devicePixelRatio || 1;
+        const totalW = CONFIG.tableWidth + CONFIG.railSize * 2;
+        const totalH = CONFIG.tableHeight + CONFIG.railSize * 2;
+
+        this.tableCache = document.createElement('canvas');
+        this.tableCache.width = totalW * dpr;
+        this.tableCache.height = totalH * dpr;
+
+        const ctx = this.tableCache.getContext('2d');
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.scale(dpr, dpr);
+
+        const w = CONFIG.tableWidth, h = CONFIG.tableHeight, r = CONFIG.railSize;
+
+        // Realistic-ish wood (procedural grain)
+        const wood = ctx.createLinearGradient(0, 0, w + r*2, h);
+        wood.addColorStop(0, '#55301a');
+        wood.addColorStop(0.35, '#7b4a2a');
+        wood.addColorStop(0.65, '#8a532a');
+        wood.addColorStop(1, '#4c2816');
+        ctx.fillStyle = wood;
+        ctx.fillRect(0, 0, w + r*2, h + r*2);
+
+        const grain = document.createElement('canvas');
+        grain.width = 240; grain.height = 240;
+        const gctx = grain.getContext('2d');
+        gctx.fillStyle = '#7a4a2a';
+        gctx.fillRect(0,0,grain.width, grain.height);
+        for (let i = 0; i < 300; i++) {
+          const y = Math.random() * grain.height;
+          const lw = 0.5 + Math.random() * 1.6;
+          const a = 0.05 + Math.random() * 0.08;
+          gctx.strokeStyle = `rgba(30,16,8,${a})`;
+          gctx.lineWidth = lw;
+          gctx.beginPath();
+          gctx.moveTo(0, y);
+          gctx.bezierCurveTo(grain.width*0.3, y + (Math.random()*18-9), grain.width*0.7, y + (Math.random()*18-9), grain.width, y + (Math.random()*14-7));
+          gctx.stroke();
+        }
+        for (let i = 0; i < 3000; i++) {
+          const x = Math.random() * grain.width;
+          const y = Math.random() * grain.height;
+          const a = Math.random() * 0.07;
+          gctx.fillStyle = `rgba(0,0,0,${a})`;
+          gctx.fillRect(x, y, 1, 1);
+        }
+
+        const pat = ctx.createPattern(grain, 'repeat');
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = pat;
+        ctx.fillRect(0, 0, w + r*2, h + r*2);
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        ctx.fillRect(10, 10, w + r*2 - 20, h + r*2 - 20);
+        ctx.restore();
+
+        const lipGrad = ctx.createLinearGradient(0, 0, 0, h + r*2);
+        lipGrad.addColorStop(0, '#3d220b');
+        lipGrad.addColorStop(1, '#2a1708');
+        ctx.fillStyle = lipGrad;
+        ctx.fillRect(15, 15, w + r*2 - 30, h + r*2 - 30);
+
+        // Felt
+        ctx.save();
+        ctx.translate(r, r);
+
+        const felt = ctx.createLinearGradient(0, 0, w, h);
+        felt.addColorStop(0, '#2ecc71');
+        felt.addColorStop(0.55, '#27ae60');
+        felt.addColorStop(1, '#1f8a4b');
+        ctx.fillStyle = felt;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.globalAlpha = 0.10;
+        for (let i = 0; i < 2400; i++) {
+          const x = Math.random() * w;
+          const y = Math.random() * h;
+          ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.18})`;
+          ctx.fillRect(x, y, 1, 1);
+        }
+        ctx.globalAlpha = 1;
+
+        // Pockets
+        ctx.fillStyle = CONFIG.colors.pocket;
+        this.pockets.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, CONFIG.pocketRadius, 0, Math.PI*2);
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, CONFIG.pocketRadius + 2.2, 0, Math.PI*2);
+          ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        });
+
+        // Diamonds
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.55)';
+        const drawDiamond = (dx, dy) => {
+          ctx.beginPath();
+          ctx.moveTo(dx, dy-4);
+          ctx.lineTo(dx+4, dy);
+          ctx.lineTo(dx, dy+4);
+          ctx.lineTo(dx-4, dy);
+          ctx.closePath();
+          ctx.fill();
+        };
+
+        if (this._orient === "portrait") {
+          for (let i=1; i<=3; i++) {
+            drawDiamond(-r*0.6, h*(i/4));
+            drawDiamond(w + r*0.6, h*(i/4));
+          }
+        } else {
+          for (let i=1; i<=3; i++) {
+            drawDiamond(w*(i/4), -r*0.6);
+            drawDiamond(w*(i/4), h + r*0.6);
+          }
+        }
+
+        // Soft vignette
+        const edge = ctx.createRadialGradient(w*0.5, h*0.5, Math.min(w,h)*0.1, w*0.5, h*0.5, Math.max(w,h)*0.85);
+        edge.addColorStop(0, 'rgba(0,0,0,0)');
+        edge.addColorStop(1, 'rgba(0,0,0,0.18)');
+        ctx.fillStyle = edge;
+        ctx.fillRect(0,0,w,h);
+
+        ctx.restore();
+      }
+
+      setupRack() {
+        this.balls = [];
+        const w = CONFIG.tableWidth, h = CONFIG.tableHeight;
+        const r = CONFIG.ballRadius;
+        const rows = 5;
+
+        if (this._orient === "portrait") {
+          // ✅ FIX: Apex should face the cue ball.
+          // Cue is lower (bottom), so rack apex must be lower than the base.
+          // We build the triangle so its BASE is closer to top, APEX is closer to bottom.
+          const rackX = w * 0.5;
+
+          const baseTopY = h * 0.18;                 // top of the rack (base row)
+          const triHeight = (rows - 1) * r * 1.73;   // equilateral spacing
+          const apexY = baseTopY + triHeight;        // apex (closest to cue)
+
+          const cueX  = w * 0.5;
+          const cueY  = h * 0.78;                    // cue near bottom
+
+          this.cueBall = new Ball(0, cueX, cueY);
+          this.balls.push(this.cueBall);
+
+          let ballId = 1;
+
+          for (let col = 0; col < rows; col++) {
+            for (let row = 0; row <= col; row++) {
+              // Horizontal spread grows as we go "up" to base row
+              const x = rackX + (row * r * 2) - (col * r);
+
+              // Invert Y: col=0 is apex (lowest), col=rows-1 is base (highest)
+              const y = apexY - (col * r * 1.73);
+
+              let currentId = ballId;
+              if (col === 2 && row === 1) currentId = 8;
+              else if (ballId === 8) { ballId++; currentId = ballId; }
+
+              this.balls.push(new Ball(currentId, x, y));
+              if (currentId !== 8) ballId++;
+            }
+          }
+        } else {
+          // Landscape: apex should face cue (cue on left), so apex is leftmost (this is already correct).
+          const startX = w * 0.72;
+          const startY = h * 0.5;
+
+          this.cueBall = new Ball(0, w * 0.26, startY);
+          this.balls.push(this.cueBall);
+
+          let ballId = 1;
+
+          for (let col = 0; col < rows; col++) {
+            for (let row = 0; row <= col; row++) {
+              const x = startX + (col * r * 1.73);
+              const y = startY + (row * r * 2) - (col * r);
+
+              let currentId = ballId;
+              if (col === 2 && row === 1) currentId = 8;
+              else if (ballId === 8) { ballId++; currentId = ballId; }
+
+              this.balls.push(new Ball(currentId, x, y));
+              if (currentId !== 8) ballId++;
+            }
+          }
+        }
+      }
+
+      start(mode) {
+        this.gameMode = mode;
+        this.gameState = 'playing';
+
+        this.players = [
+          {name:'Player 1', type:null},
+          {name: (mode === 'bot' ? 'Computer' : 'Player 2'), type:null}
+        ];
+        this.turnIndex = 0;
+        this.tableOpen = true;
+
+        this.ballInHand = false;
+        this.shotInProgress = false;
+        this.botScheduled = false;
+        this.pottedByPlayer = [[], []];
+
+        this.resetTurnState();
+        this.setupRack();
+
+        document.getElementById('ball-return-stack').innerHTML = '';
+        document.getElementById('p1-tray').innerHTML = '';
+        document.getElementById('p2-tray').innerHTML = '';
+
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('game-over-modal').style.display = 'none';
+
+        this.resetTurnTimer();
+        this.updateUI();
+        this.resize();
+      }
+
+      resetTurnState() { this.ballsPottedThisTurn = []; this.foulThisTurn = false; }
+
+      endGame(winnerIndex, reason) {
+        this.gameState = 'gameover';
+        document.getElementById('winner-text').innerText = `${this.players[winnerIndex].name.toUpperCase()} WINS!`;
+        document.getElementById('win-reason').innerText = reason;
+        document.getElementById('game-over-modal').style.display = 'flex';
+        this.updateTimerUI();
+      }
+
+      getMousePos(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const scaleX = this.canvas.width / (rect.width * dpr);
+        const scaleY = this.canvas.height / (rect.height * dpr);
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        return new Vec2(x - CONFIG.railSize, y - CONFIG.railSize);
+      }
+
+      ballsMoving() { return this.balls.some(b => b.active && b.vel.mag() > 0); }
+
+      clampToTable(pos) {
+        const r = CONFIG.ballRadius;
+        return new Vec2(
+          Math.max(r, Math.min(CONFIG.tableWidth - r, pos.x)),
+          Math.max(r, Math.min(CONFIG.tableHeight - r, pos.y))
+        );
+      }
+
+      isValidCueBallPos(pos) {
+        const r = CONFIG.ballRadius;
+        for (const p of this.pockets) if (pos.dist(p) < (CONFIG.pocketRadius + r*0.20)) return false;
+        for (const b of this.balls) {
+          if (!b.active) continue;
+          if (b.id === 0) continue;
+          if (pos.dist(b.pos) < (r + b.radius + 0.5)) return false;
+        }
+        return true;
+      }
+
+      findFirstValidSpot(preferred) {
+        const base = this.clampToTable(preferred);
+        if (this.isValidCueBallPos(base)) return base;
+
+        const r = CONFIG.ballRadius;
+        const step = r * 2.2;
+        for (let radius = step; radius < Math.max(CONFIG.tableWidth, CONFIG.tableHeight); radius += step) {
+          for (let a = 0; a < Math.PI*2; a += Math.PI/10) {
+            const test = this.clampToTable(new Vec2(base.x + Math.cos(a)*radius, base.y + Math.sin(a)*radius));
+            if (this.isValidCueBallPos(test)) return test;
+          }
+        }
+
+        if (this._orient === "portrait") return this.clampToTable(new Vec2(CONFIG.tableWidth*0.5, CONFIG.tableHeight*0.78));
+        return this.clampToTable(new Vec2(CONFIG.tableWidth*0.26, CONFIG.tableHeight*0.5));
+      }
+
+      ensureCueBallOnTable() {
+        if (!this.cueBall) return;
+        this.cueBall.active = true;
+        this.cueBall.vel = new Vec2(0,0);
+
+        const defaultPos = (this._orient === "portrait")
+          ? new Vec2(CONFIG.tableWidth*0.5, CONFIG.tableHeight*0.78)
+          : new Vec2(CONFIG.tableWidth*0.26, CONFIG.tableHeight*0.5);
+
+        this.cueBall.pos = this.findFirstValidSpot(defaultPos);
+      }
+
+      handleInputStart(e) {
+        if (this.gameState !== 'playing') return;
+        if (this.ballsMoving()) return;
+        if (this.gameMode === 'bot' && this.turnIndex === 1) return;
+
+        this.mousePos = this.getMousePos(e);
+
+        if (this.ballInHand) {
+          this.isPlacingCue = true;
+          this.ballInHandCandidate = this.clampToTable(this.mousePos);
+          this.ensureCueBallOnTable();
+          this.cueBall.pos = this.ballInHandCandidate;
+          return;
+        }
+
+        this.isDragging = true;
+        this.dragStart = this.mousePos;
+        this.dragCurrent = this.mousePos;
+      }
+
+      handleInputMove(e) {
+        this.mousePos = this.getMousePos(e);
+
+        if (this.isPlacingCue && this.ballInHand) {
+          this.ballInHandCandidate = this.clampToTable(this.mousePos);
+          this.cueBall.active = true;
+          this.cueBall.vel = new Vec2(0,0);
+          this.cueBall.pos = this.ballInHandCandidate;
+          return;
+        }
+
+        if (this.isDragging) this.dragCurrent = this.mousePos;
+      }
+
+      handleInputEnd(e) {
+        if (this.gameState !== 'playing') return;
+
+        if (this.isPlacingCue && this.ballInHand) {
+          this.isPlacingCue = false;
+          const pos = this.ballInHandCandidate
+            ? this.clampToTable(this.ballInHandCandidate)
+            : this.clampToTable(this.getMousePos(e));
+
+          this.ensureCueBallOnTable();
+          this.cueBall.pos = pos;
+
+          if (this.isValidCueBallPos(pos)) {
+            this.ballInHand = false;
+            this.ballInHandCandidate = null;
+            this.updateUI();
+          } else {
+            this.ballInHandCandidate = pos;
+            this.updateUI();
+          }
+          return;
+        }
+
+        if (!this.isDragging) return;
+        this.isDragging = false;
+        if (this.ballsMoving()) return;
+
+        const pullVector = this.dragStart.sub(this.dragCurrent);
+        const mag = pullVector.mag();
+
+        if (mag > 3) {
+          if (!this.cueBall || !this.cueBall.active) this.ensureCueBallOnTable();
+
+          this.shotOwner = this.turnIndex;
+
+          const power = Math.min(mag * 0.15, CONFIG.maxPower);
+          this.cueBall.vel = pullVector.norm().mult(power);
+          AudioSys.playHit(power / CONFIG.maxPower);
+
+          this.resetTurnState();
+          this.shotInProgress = true;
+        }
+      }
+
+      addBallToRail(ball) {
+        const stack = document.getElementById('ball-return-stack');
+        const div = document.createElement('div');
+        div.className = 'potted-ball';
+
+        div.style.backgroundColor = ball.color;
+        if (ball.isStriped) div.style.background = `linear-gradient(to bottom, #fff 20%, ${ball.color} 20%, ${ball.color} 80%, #fff 80%)`;
+        if (ball.id === 8) div.style.backgroundColor = '#111';
+
+        div.innerHTML = `<span>${ball.id}</span>`;
+        stack.appendChild(div);
+        stack.scrollLeft = stack.scrollWidth;
+      }
+
+      renderPlayerTray(playerIndex) {
+        const tray = document.getElementById(playerIndex === 0 ? 'p1-tray' : 'p2-tray');
+        const player = this.players[playerIndex];
+        const ids = this.pottedByPlayer[playerIndex];
+
+        tray.innerHTML = "";
+
+        const showBall = (ball) => {
+          if (!player.type) return true;
+          if (ball.id === 8) return true;
+          if (player.type === 'solids') return ball.isSolid;
+          if (player.type === 'stripes') return ball.isStriped;
+          return true;
+        };
+
+        ids.forEach(id => {
+          const b = new Ball(id, 0, 0);
+          if (!showBall(b)) return;
+
+          const el = document.createElement('div');
+          el.className = "mini-ball";
+
+          if (id === 8) el.style.background = "#111";
+          else if (id === 0) el.style.background = "#f7f7f7";
+          else if (b.isStriped) el.style.background = `linear-gradient(to bottom, #fff 22%, ${b.color} 22%, ${b.color} 78%, #fff 78%)`;
+          else el.style.background = b.color;
+
+          el.innerHTML = `<div class="n">${id}</div>`;
+          tray.appendChild(el);
+        });
+
+        tray.scrollLeft = tray.scrollWidth;
+      }
+
+      updatePhysics() {
+        if (this.gameState !== 'playing') return;
+
+        const steps = 8;
+        let ballsStopped = true;
+
+        for (let s = 0; s < steps; s++) {
+          this.balls.forEach(b => {
+            if (!b.active) return;
+
+            b.pos = b.pos.add(b.vel.mult(1 / steps));
+            if (b.vel.mag() > 0) ballsStopped = false;
+
+            if (b.pos.x < b.radius) { b.pos.x = b.radius; b.vel.x *= -1; AudioSys.playRail(b.vel.mag()/20); }
+            if (b.pos.x > CONFIG.tableWidth - b.radius) { b.pos.x = CONFIG.tableWidth - b.radius; b.vel.x *= -1; AudioSys.playRail(b.vel.mag()/20); }
+            if (b.pos.y < b.radius) { b.pos.y = b.radius; b.vel.y *= -1; AudioSys.playRail(b.vel.mag()/20); }
+            if (b.pos.y > CONFIG.tableHeight - b.radius) { b.pos.y = CONFIG.tableHeight - b.radius; b.vel.y *= -1; AudioSys.playRail(b.vel.mag()/20); }
+
+            if (s === 0) b.update();
+          });
+
+          for (let i = 0; i < this.balls.length; i++) {
+            for (let j = i + 1; j < this.balls.length; j++) {
+              const b1 = this.balls[i], b2 = this.balls[j];
+              if (!b1.active || !b2.active) continue;
+
+              const dist = b1.pos.dist(b2.pos);
+              if (dist < b1.radius + b2.radius) {
+                const n = b1.pos.sub(b2.pos).norm();
+                const overlap = (b1.radius + b2.radius) - dist;
+
+                b1.pos = b1.pos.add(n.mult(overlap * 0.5));
+                b2.pos = b2.pos.sub(n.mult(overlap * 0.5));
+
+                const rv = b1.vel.sub(b2.vel);
+                const velAlongNormal = rv.dot(n);
+                if (velAlongNormal > 0) continue;
+
+                const impulse = n.mult(-(1.9) * velAlongNormal / 2);
+                b1.vel = b1.vel.add(impulse);
+                b2.vel = b2.vel.sub(impulse);
+
+                const impactForce = Math.abs(velAlongNormal);
+                if (impactForce > 0.5 && s === 0) AudioSys.playHit(Math.min(impactForce/10, 1));
+              }
+            }
+          }
+
+          this.balls.forEach(b => {
+            if (!b.active) return;
+            for (const p of this.pockets) {
+              if (b.pos.dist(p) < CONFIG.pocketRadius) {
+                AudioSys.playPocket();
+                b.active = false;
+                this.ballsPottedThisTurn.push(b);
+
+                if (b.id === 0) {
+                  this.foulThisTurn = true;
+                } else {
+                  this.addBallToRail(b);
+                  this.pottedByPlayer[this.shotOwner].push(b.id);
+                  this.renderPlayerTray(0);
+                  this.renderPlayerTray(1);
+                }
+              }
+            }
+          });
+        }
+
+        if (ballsStopped && this.shotInProgress && !this.ballsMoving()) {
+          this.shotInProgress = false;
+          this.handleTurnEnd();
+        }
+      }
+
+      handleTurnEnd() {
+        const currentPlayer = this.players[this.turnIndex];
+        const opponentIndex = 1 - this.turnIndex;
+
+        if (this.ballsPottedThisTurn.length === 0 && !this.foulThisTurn) {
+          this.changeTurn(false);
+          return;
+        }
+
+        const eightBallPotted = this.ballsPottedThisTurn.some(b => b.id === 8);
+        if (eightBallPotted) {
+          if (this.foulThisTurn) { this.endGame(opponentIndex, "Opponent potted 8-ball on a foul."); return; }
+          if (this.tableOpen) { this.endGame(opponentIndex, "Opponent potted 8-ball early."); return; }
+
+          const myBalls = this.balls.filter(b =>
+            b.id !== 0 && b.id !== 8 &&
+            (currentPlayer.type === 'solids' ? b.isSolid : b.isStriped)
+          );
+          if (myBalls.some(b => b.active)) { this.endGame(opponentIndex, "Opponent potted 8-ball before clearing their group."); return; }
+          this.endGame(this.turnIndex, "Potted 8-ball to win!");
+          return;
+        }
+
+        if (this.foulThisTurn) {
+          this.ensureCueBallOnTable();
+          this.changeTurn(true);
+          return;
+        }
+
+        let turnContinues = false;
+        const objectBallsPotted = this.ballsPottedThisTurn.filter(b => b.id !== 0);
+
+        if (objectBallsPotted.length > 0) {
+          if (this.tableOpen) {
+            const firstBall = objectBallsPotted[0];
+            currentPlayer.type = firstBall.isSolid ? 'solids' : 'stripes';
+            this.players[opponentIndex].type = (currentPlayer.type === 'solids') ? 'stripes' : 'solids';
+            this.tableOpen = false;
+            turnContinues = true;
+          } else {
+            const pottedMyType = objectBallsPotted.some(b =>
+              (currentPlayer.type === 'solids' ? b.isSolid : b.isStriped)
+            );
+            if (pottedMyType) turnContinues = true;
+          }
+        }
+
+        if (turnContinues) {
+          this.resetTurnTimer();
+          this.resetTurnState();
+          this.updateUI();
+        } else {
+          this.changeTurn(false);
+        }
+      }
+
+      changeTurn(ballInHandForNext) {
+        this.turnIndex = 1 - this.turnIndex;
+        this.resetTurnState();
+
+        this.ballInHand = !!ballInHandForNext;
+        this.isPlacingCue = false;
+        this.ballInHandCandidate = null;
+
+        if (this.ballInHand) this.ensureCueBallOnTable();
+
+        this.resetTurnTimer();
+        this.updateUI();
+      }
+
+      updateUI() {
+        const p1 = this.players[0], p2 = this.players[1];
+        const activeName = this.players[this.turnIndex].name;
+
+        let sub = "Drag to aim & shoot";
+        if (this.ballInHand) sub = "Foul: ball in hand (place white ball anywhere)";
+        if (this.gameMode === 'bot' && this.turnIndex === 1) sub = "Computer is thinking...";
+
+        document.getElementById('turn-display').innerHTML = `ACTIVE: ${activeName}<span class="sub">${sub}</span>`;
+
+        document.getElementById('p1-type').innerText = p1.type ? p1.type.toUpperCase() : 'Open';
+        document.getElementById('p2-type').innerText = p2.type ? p2.type.toUpperCase() : 'Open';
+
+        const p1Panel = document.getElementById('p1-status');
+        const p2Panel = document.getElementById('p2-status');
+
+        p1Panel.classList.toggle('active', this.turnIndex === 0);
+        p2Panel.classList.toggle('active', this.turnIndex === 1);
+
+        p1Panel.classList.toggle('dim', this.turnIndex !== 0);
+        p2Panel.classList.toggle('dim', this.turnIndex !== 1);
+
+        this.renderPlayerTray(0);
+        this.renderPlayerTray(1);
+
+        this.updateTimerUI();
+      }
+
+      botShoot() {
+        if (this.gameState !== 'playing' || this.turnIndex !== 1 || this.ballsMoving()) return;
+
+        const bot = this.players[1];
+
+        if (this.ballInHand) {
+          this.ensureCueBallOnTable();
+          for (let tries = 0; tries < 140; tries++) {
+            const test = new Vec2(
+              CONFIG.ballRadius + Math.random() * (CONFIG.tableWidth - CONFIG.ballRadius*2),
+              CONFIG.ballRadius + Math.random() * (CONFIG.tableHeight - CONFIG.ballRadius*2)
+            );
+            if (this.isValidCueBallPos(test)) {
+              this.cueBall.pos = test;
+              break;
+            }
+          }
+          this.ballInHand = false;
+          this.updateUI();
+        }
+
+        let targets = this.balls.filter(b => b.active && b.id !== 0);
+        if (!this.tableOpen && bot.type) {
+          targets = targets.filter(b => b.id !== 8 && (bot.type === 'solids' ? b.isSolid : b.isStriped));
+          if (targets.length === 0) targets = this.balls.filter(b => b.active && b.id === 8);
+        } else if (this.tableOpen) {
+          targets = targets.filter(b => b.id !== 8);
+        }
+        if (targets.length === 0) return;
+
+        const targetBall = targets[Math.floor(Math.random() * targets.length)];
+        const targetPocket = this.pockets[Math.floor(Math.random() * this.pockets.length)];
+
+        const aimSpot = targetBall.pos.add(
+          targetBall.pos.sub(targetPocket).norm().mult(targetBall.radius + this.cueBall.radius)
+        );
+
+        const shootDir = aimSpot.sub(this.cueBall.pos).norm();
+        const power = CONFIG.maxPower * (0.6 + Math.random() * 0.3);
+
+        this.resetTurnState();
+        this.shotOwner = this.turnIndex;
+        this.cueBall.vel = shootDir.mult(power);
+        this.shotInProgress = true;
+        AudioSys.playHit(power / CONFIG.maxPower);
+      }
+
+      drawCue() {
+        if (!this.cueBall) return;
+        if (!this.cueBall.active) return;
+        if (this.ballsMoving()) return;
+        if (this.ballInHand) return;
+        if (this.gameState !== 'playing') return;
+        if (this.gameMode === 'bot' && this.turnIndex === 1) return;
+
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(CONFIG.railSize, CONFIG.railSize);
+
+        let aimDir, powerPct = 0;
+        let showPower = false;
+
+        if (this.isDragging) {
+          const pullVector = this.dragStart.sub(this.dragCurrent);
+          const mag = pullVector.mag();
+          aimDir = pullVector.norm();
+          powerPct = Math.min(mag * 0.15, CONFIG.maxPower) / CONFIG.maxPower;
+          showPower = true;
+        } else {
+          aimDir = this.mousePos.sub(this.cueBall.pos).norm();
+        }
+
+        const bx = this.cueBall.pos.x, by = this.cueBall.pos.y;
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+        ctx.setLineDash([6,6]);
+        ctx.lineWidth = 2;
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + aimDir.x * 900, by + aimDir.y * 900);
+        ctx.stroke();
+
+        ctx.translate(bx, by);
+        ctx.rotate(Math.atan2(aimDir.y, aimDir.x) + Math.PI);
+
+        const baseOffset = 20;
+        const powerOffset = showPower ? (powerPct * 80) : 0;
+        const totalOffset = baseOffset + powerOffset;
+
+        const cueGrad = ctx.createLinearGradient(totalOffset, 0, totalOffset + 340, 0);
+        cueGrad.addColorStop(0, '#d57a2a');
+        cueGrad.addColorStop(0.45, '#b85d1c');
+        cueGrad.addColorStop(1, '#7b3a0f');
+        ctx.fillStyle = cueGrad;
+        ctx.fillRect(totalOffset, -3, 320, 6);
+
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(totalOffset - 6, -3, 6, 6);
+
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(totalOffset + 210, -4, 110, 8);
+
+        if (showPower && powerPct > 0.05) {
+          ctx.restore();
+          ctx.save();
+          ctx.translate(CONFIG.railSize, CONFIG.railSize);
+          ctx.beginPath();
+          ctx.strokeStyle = `hsl(${120 - powerPct*120}, 100%, 50%)`;
+          ctx.lineWidth = 4;
+          ctx.setLineDash([]);
+          ctx.moveTo(bx, by);
+          ctx.lineTo(bx + aimDir.x * (70 + powerPct * 60), by + aimDir.y * (70 + powerPct * 60));
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      drawBallInHandGuide() {
+        if (!this.ballInHand || !this.cueBall || !this.cueBall.active) return;
+
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(CONFIG.railSize, CONFIG.railSize);
+
+        const pos = this.cueBall.pos;
+        const ok = this.isValidCueBallPos(pos);
+
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, CONFIG.ballRadius + 5, 0, Math.PI*2);
+        ctx.strokeStyle = ok ? 'rgba(0,255,160,0.95)' : 'rgba(255,80,80,0.95)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6,6]);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      loop() {
+        this.tickTimer();
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        if (this.gameState === 'playing') this.updatePhysics();
+
+        if (this.tableCache) this.ctx.drawImage(this.tableCache, 0, 0);
+
+        this.ctx.save();
+        this.ctx.translate(CONFIG.railSize, CONFIG.railSize);
+        this.balls.forEach(b => b.draw(this.ctx));
+        this.ctx.restore();
+
+        this.drawBallInHandGuide();
+        this.drawCue();
+
+        if (this.gameMode === 'bot' && this.turnIndex === 1 && this.gameState === 'playing' && !this.ballsMoving()) {
+          if (!this.botScheduled) {
+            this.botScheduled = true;
+            setTimeout(() => {
+              this.botScheduled = false;
+              if (this.gameMode === 'bot' && this.turnIndex === 1 && this.gameState === 'playing' && !this.ballsMoving()) {
+                this.botShoot();
+              }
+            }, 900);
+          }
+        } else {
+          this.botScheduled = false;
+        }
+
+        requestAnimationFrame(() => this.loop());
+      }
+    }
+
+    const game = new Game();
+    function startGame(mode) { game.start(mode); }
+
+    function showMainMenu() {
+      document.getElementById('game-over-modal').style.display = 'none';
+      document.getElementById('main-menu').style.display = 'flex';
+      game.gameState = 'menu';
+      document.getElementById('turn-display').innerHTML = `POOL MASTER 2D<span class="sub">Choose a mode to start</span>`;
+      document.getElementById('timer-value').textContent = "--";
+      document.getElementById('timer-value').classList.remove('warn');
+    }
+    (function () {
+  const popup = document.getElementById("switchPopup");
+  const btnGo = document.getElementById("switchGo");
+  const btnLater = document.getElementById("switchLater");
+  const titleEl = document.getElementById("switchTitle");
+  if (!popup) return;
+
+  // Detect current page name and choose the opposite game
+  const page = (location.pathname.split("/").pop() || "").toLowerCase();
+
+  // Adjust these if your filenames differ
+  let target = "index.html";
+  if (page.includes("ludo")) target = "billiard.html";
+  else if (page.includes("billiard") || page.includes("pool")) target = "ludo.html";
+
+  const targetLabel =
+    target.toLowerCase().includes("ludo") ? "Ludo" :
+    target.toLowerCase().includes("billiard") ? "Billiard" : "Game Hub";
+
+  function canShowNow() {
+    // show only while playing (not on menu / game over)
+    if (window.game && window.game.gameState && window.game.gameState !== "playing") return false;
+
+    // don't interrupt while balls are moving (billiard)
+    if (window.game && typeof window.game.ballsMoving === "function" && window.game.ballsMoving()) return false;
+
+    return document.visibilityState === "visible";
+  }
+
+  function show() {
+    if (!canShowNow()) return;
+    if (titleEl) titleEl.textContent = `Switch to ${targetLabel}?`;
+    popup.style.display = "block";
+    clearTimeout(show._t);
+    show._t = setTimeout(() => (popup.style.display = "none"), 6500);
+  }
+
+  function hide() {
+    popup.style.display = "none";
+  }
+
+  btnGo && btnGo.addEventListener("click", () => (window.location.href = target));
+  btnLater && btnLater.addEventListener("click", hide);
+
+  // first after ~35s, then every ~90s (only when allowed)
+  setTimeout(show, 35000);
+  setInterval(show, 90000);
+})();
+  </script>
+</body>
+</html>
