@@ -38,11 +38,13 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* dvh fixes mobile address-bar resizing */
+    /* dvh/svh/vh fixes for mobile address-bar resizing (best-effort across WebViews) */
     #game-container {
       position: fixed;
       inset: 0;
       width: 100%;
+      height: 100vh;
+      height: 100svh;
       height: 100dvh;
       min-height: 100vh;
       display: flex;
@@ -284,18 +286,23 @@
     /* Game Area */
     #table-wrapper {
       flex: 1;
+      min-height: 0; /* IMPORTANT: allow flex child to shrink (prevents bottom cropping on some WebViews) */
       position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
       overflow: hidden;
       width: 100%;
-      padding: 10px;
+      padding: clamp(8px, 1.6vmin, 14px);
       touch-action: none;
     }
 
+    /* ✅ Absolute-centering the scaler fixes "bottom not shown" on mobile WebViews */
     #game-scaler {
-      position: relative;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(1);
       transform-origin: center;
       display: flex;
       align-items: stretch;
@@ -461,36 +468,36 @@
     }
     .btn-primary:hover { filter: brightness(1.03); }
     .btn-primary:active { transform: scale(0.98); }
-    /* ==== GAME SWITCH POPUP (minimal, glassy) ==== */
-.switchPopup{
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  z-index: 999999;
-  width: min(560px, calc(100% - 24px));
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.45));
-  border: 1px solid rgba(2,6,23,.12);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 22px 70px rgba(2,6,23,.18);
-  padding: 12px;
-  display:none;
-}
-.switchCard{ display:flex; align-items:center; justify-content:space-between; gap: 12px; }
-.switchTitle{ font: 700 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial; color: rgba(11,18,32,.88); }
-.switchActions{ display:flex; gap: 10px; }
-.switchBtn{
-  border-radius: 14px;
-  padding: 9px 12px;
-  font-weight: 900;
-  border: 1px solid rgba(2,6,23,.12);
-  cursor:pointer;
-}
-.switchBtn.ghost{ background: rgba(255,255,255,.55); color: rgba(11,18,32,.90); }
-.switchBtn.primary{ background: rgba(11,18,32,.92); color:#fff; border-color: rgba(11,18,32,.18); }
 
+    /* ==== GAME SWITCH POPUP (minimal, glassy) ==== */
+    .switchPopup{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      z-index: 999999;
+      width: min(560px, calc(100% - 24px));
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.45));
+      border: 1px solid rgba(2,6,23,.12);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 22px 70px rgba(2,6,23,.18);
+      padding: 12px;
+      display:none;
+    }
+    .switchCard{ display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    .switchTitle{ font: 700 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial; color: rgba(11,18,32,.88); }
+    .switchActions{ display:flex; gap: 10px; }
+    .switchBtn{
+      border-radius: 14px;
+      padding: 9px 12px;
+      font-weight: 900;
+      border: 1px solid rgba(2,6,23,.12);
+      cursor:pointer;
+    }
+    .switchBtn.ghost{ background: rgba(255,255,255,.55); color: rgba(11,18,32,.90); }
+    .switchBtn.primary{ background: rgba(11,18,32,.92); color:#fff; border-color: rgba(11,18,32,.18); }
   </style>
 </head>
 
@@ -545,20 +552,19 @@
       </div>
     </div>
   </div>
+
   <!-- ==== GAME SWITCH POPUP (drop-in) ==== -->
-<!-- ==== GAME SWITCH POPUP (drop-in) ==== -->
-<div id="switchPopup" class="switchPopup" style="display:none;">
-  <div class="switchCard">
-    <div class="switchTitle" id="switchTitle">Want to try a different game?</div>
-    <div class="switchActions">
-      <button class="switchBtn ghost" id="switchLater" type="button">Later</button>
-      <button class="switchBtn primary" id="switchGo" type="button">Switch</button>
+  <div id="switchPopup" class="switchPopup" style="display:none;">
+    <div class="switchCard">
+      <div class="switchTitle" id="switchTitle">Want to try a different game?</div>
+      <div class="switchActions">
+        <button class="switchBtn ghost" id="switchLater" type="button">Later</button>
+        <button class="switchBtn primary" id="switchGo" type="button">Switch</button>
+      </div>
     </div>
   </div>
-</div>
-<!-- ==== END GAME SWITCH POPUP ==== -->
+  <!-- ==== END GAME SWITCH POPUP ==== -->
 
- 
   <script>
     /** Audio System (no external files). */
     const AudioSys = {
@@ -927,20 +933,25 @@
 
         const flexDir = getComputedStyle(this.scaler).flexDirection;
 
+        // ✅ IMPORTANT: use computed styles (unscaled) instead of getBoundingClientRect (scaled)
+        const railCS = getComputedStyle(this.sideRail);
+        const railH = parseFloat(railCS.height) || 70;
+        const railW = parseFloat(railCS.width) || 70;
+
         let baseW, baseH;
         if (flexDir === 'column') {
-          const railH = this.sideRail.getBoundingClientRect().height || 70;
           baseW = totalW;
           baseH = totalH + railH;
         } else {
-          const railW = this.sideRail.getBoundingClientRect().width || 70;
           baseW = totalW + railW;
           baseH = totalH;
         }
 
         const scale = Math.min(availW / baseW, availH / baseH) * 0.985;
         const clamped = Math.max(0.2, Math.min(scale, 3.0));
-        this.scaler.style.transform = `scale(${clamped})`;
+
+        // ✅ Keep it centered (fixes bottom crop)
+        this.scaler.style.transform = `translate(-50%, -50%) scale(${clamped})`;
       }
 
       initTable() {
@@ -1104,17 +1115,13 @@
         const rows = 5;
 
         if (this._orient === "portrait") {
-          // ✅ FIX: Apex should face the cue ball.
-          // Cue is lower (bottom), so rack apex must be lower than the base.
-          // We build the triangle so its BASE is closer to top, APEX is closer to bottom.
           const rackX = w * 0.5;
-
-          const baseTopY = h * 0.18;                 // top of the rack (base row)
-          const triHeight = (rows - 1) * r * 1.73;   // equilateral spacing
-          const apexY = baseTopY + triHeight;        // apex (closest to cue)
+          const baseTopY = h * 0.18;
+          const triHeight = (rows - 1) * r * 1.73;
+          const apexY = baseTopY + triHeight;
 
           const cueX  = w * 0.5;
-          const cueY  = h * 0.78;                    // cue near bottom
+          const cueY  = h * 0.78;
 
           this.cueBall = new Ball(0, cueX, cueY);
           this.balls.push(this.cueBall);
@@ -1123,10 +1130,7 @@
 
           for (let col = 0; col < rows; col++) {
             for (let row = 0; row <= col; row++) {
-              // Horizontal spread grows as we go "up" to base row
               const x = rackX + (row * r * 2) - (col * r);
-
-              // Invert Y: col=0 is apex (lowest), col=rows-1 is base (highest)
               const y = apexY - (col * r * 1.73);
 
               let currentId = ballId;
@@ -1138,7 +1142,6 @@
             }
           }
         } else {
-          // Landscape: apex should face cue (cue on left), so apex is leftmost (this is already correct).
           const startX = w * 0.72;
           const startY = h * 0.5;
 
@@ -1747,54 +1750,47 @@
       document.getElementById('timer-value').textContent = "--";
       document.getElementById('timer-value').classList.remove('warn');
     }
+
     (function () {
-  const popup = document.getElementById("switchPopup");
-  const btnGo = document.getElementById("switchGo");
-  const btnLater = document.getElementById("switchLater");
-  const titleEl = document.getElementById("switchTitle");
-  if (!popup) return;
+      const popup = document.getElementById("switchPopup");
+      const btnGo = document.getElementById("switchGo");
+      const btnLater = document.getElementById("switchLater");
+      const titleEl = document.getElementById("switchTitle");
+      if (!popup) return;
 
-  // Detect current page name and choose the opposite game
-  const page = (location.pathname.split("/").pop() || "").toLowerCase();
+      const page = (location.pathname.split("/").pop() || "").toLowerCase();
 
-  // Adjust these if your filenames differ
-  let target = "index.html";
-  if (page.includes("ludo")) target = "billiard.html";
-  else if (page.includes("billiard") || page.includes("pool")) target = "ludo.html";
+      let target = "index.html";
+      if (page.includes("ludo")) target = "billiard.html";
+      else if (page.includes("billiard") || page.includes("pool")) target = "ludo.html";
 
-  const targetLabel =
-    target.toLowerCase().includes("ludo") ? "Ludo" :
-    target.toLowerCase().includes("billiard") ? "Billiard" : "Game Hub";
+      const targetLabel =
+        target.toLowerCase().includes("ludo") ? "Ludo" :
+        target.toLowerCase().includes("billiard") ? "Billiard" : "Game Hub";
 
-  function canShowNow() {
-    // show only while playing (not on menu / game over)
-    if (window.game && window.game.gameState && window.game.gameState !== "playing") return false;
+      function canShowNow() {
+        if (window.game && window.game.gameState && window.game.gameState !== "playing") return false;
+        if (window.game && typeof window.game.ballsMoving === "function" && window.game.ballsMoving()) return false;
+        return document.visibilityState === "visible";
+      }
 
-    // don't interrupt while balls are moving (billiard)
-    if (window.game && typeof window.game.ballsMoving === "function" && window.game.ballsMoving()) return false;
+      function show() {
+        if (!canShowNow()) return;
+        if (titleEl) titleEl.textContent = `Switch to ${targetLabel}?`;
+        popup.style.display = "block";
+        clearTimeout(show._t);
+        show._t = setTimeout(() => (popup.style.display = "none"), 6500);
+      }
 
-    return document.visibilityState === "visible";
-  }
+      function hide() { popup.style.display = "none"; }
 
-  function show() {
-    if (!canShowNow()) return;
-    if (titleEl) titleEl.textContent = `Switch to ${targetLabel}?`;
-    popup.style.display = "block";
-    clearTimeout(show._t);
-    show._t = setTimeout(() => (popup.style.display = "none"), 6500);
-  }
+      btnGo && btnGo.addEventListener("click", () => (window.location.href = target));
+      btnLater && btnLater.addEventListener("click", hide);
 
-  function hide() {
-    popup.style.display = "none";
-  }
-
-  btnGo && btnGo.addEventListener("click", () => (window.location.href = target));
-  btnLater && btnLater.addEventListener("click", hide);
-
-  // first after ~35s, then every ~90s (only when allowed)
-  setTimeout(show, 35000);
-  setInterval(show, 90000);
-})();
+      setTimeout(show, 35000);
+      setInterval(show, 90000);
+    })();
   </script>
 </body>
 </html>
+
